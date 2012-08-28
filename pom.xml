@@ -9,6 +9,9 @@
   <name>libraries utilities mojo</name>
   <description>plugin to install &amp; deploy libraries from folder</description>
   
+<prerequisites>
+	<maven>2.2.1</maven>
+</prerequisites>
   
 <properties>
 	<!-- SCM properties  -->
@@ -17,9 +20,9 @@
 </properties>	
 
 <scm>
-<developerConnection>scm:git:/Users/softphone/WORKSPACES/JUNO/maven-bulk-deploy/.git</developerConnection>  
-<connection>scm:git:/Users/softphone/WORKSPACES/JUNO/maven-bulk-deploy/.git</connection>  
-<url>/Users/softphone/WORKSPACES/JUNO/maven-bulk-deploy/.git</url>
+<developerConnection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</developerConnection>  
+<connection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</connection>  
+<url>https://github.com/bsorrentino/maven-bulk-deploy.git</url>
 </scm>
 
 <dependencies>
