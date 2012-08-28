@@ -14,9 +14,6 @@
 </prerequisites>
   
 <properties>
-	<!-- SCM properties  -->
-	<addTimestamp>true</addTimestamp>
-	<tagBase>https://support.softphone.it/svn/tags/</tagBase>
 </properties>	
 
 <scm>
