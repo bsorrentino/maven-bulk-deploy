@@ -1,0 +1,64 @@
+
+{toc}
+
+
+h1. Introduction
+
+{panel}
+Plugin that allow to deploy several libraries within an asset repository 
+{panel}
+
+h1. Usage
+
+{panel}
+
+
+{code:xml}
+
+<plugin>
+
+	<groupId>org.bsc.maven.plugin</groupId>
+	<artifactId>lib-utils</artifactId>
+	<version>1.0</version>
+	
+	<configuration>
+	
+		<groupId>mygroupId</groupId>
+		<version>myrelease</version>
+		<sourceFolder>/folder_where_are_libraries</sourceFolder>
+		<includes><!-- INCLUDE FILTERS -->
+			<include>*.jar</include>
+		</includes>
+		
+		<excludes><!-- EXCLUDE FILTERS -->
+			<exclude>*.txt</exclude>
+			<exclude>log4j-1.2.8.jar</exclude>
+		</excludes>
+	
+		<!-- REPOSITORY'S COORDINATE WHERE DEPLOY --> 
+		<repositoryId>$\{release.repo.id\}</repositoryId>
+		<url>$\{repo.url\}/third-party</url>
+	    
+	</configuration>
+	
+</plugin>
+
+{code}
+
+{panel}
+
+
+
+${plugin.summary}
+
+----
+
+h1. Issue Tracking
+
+----
+
+${plugin.goals}
+
+----
+
+${project.dependencies}
