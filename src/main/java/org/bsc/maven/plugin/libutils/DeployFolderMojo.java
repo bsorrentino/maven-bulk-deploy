@@ -18,93 +18,106 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.WriterFactory;
-import org.jfrog.maven.annomojo.annotations.MojoComponent;
-import org.jfrog.maven.annomojo.annotations.MojoGoal;
-import org.jfrog.maven.annomojo.annotations.MojoParameter;
-import org.jfrog.maven.annomojo.annotations.MojoRequiresProject;
 
 /**
  * Installs artifacts from folder to remote repository.
  *
  */
-@MojoRequiresProject(false)
-@MojoGoal("deploy-folder")
+@Mojo(  name = "deploy-folder", 
+        requiresProject = true)
+//@MojoRequiresProject(false)
+//@MojoGoal("deploy-folder")
 public class DeployFolderMojo extends AbstractDeployMojo
 {
     /**
      * preview mode
      */
-    @MojoParameter(defaultValue="false")
+    @Parameter(defaultValue = "false")
+    //@MojoParameter(defaultValue="false")
     private boolean preview;
 
     /**
      * 
      */
-    @MojoParameter
+    @Parameter()
+    //@MojoParameter
     private String includes[] = new String[0];
 
     /**
      * 
      */
-    @MojoParameter
+    @Parameter()
+    //@MojoParameter
     private String excludes[] = new String[0];
 	
     /**
      * GroupId of the artifact to be deployed.  Retrieved from POM file if specified.
      *
      */
-    @MojoParameter(expression="${groupId}")
+    @Parameter(property="groupId")
+    //@MojoParameter(expression="${groupId}")
     private String groupId;
 
     /**
      * ArtifactId prefix of the artifacts to be deployed.  Retrieved from POM file if specified.
      *
      */
-    @MojoParameter( expression="${artifactId-prefix}",defaultValue="")
+    @Parameter(property="artifactId-prefix", defaultValue="")
+    //@MojoParameter( expression="${artifactId-prefix}",defaultValue="")
     private String artifactIdPrefix = "";
 
     /**
      * ArtifactId postfix of the artifacts to be deployed.  Retrieved from POM file if specified.
      *
      */
-    @MojoParameter( expression="${artifactId-postfix}",defaultValue="")
+    @Parameter(property="artifactId-postfix", defaultValue="")
+    //@MojoParameter( expression="${artifactId-postfix}",defaultValue="")
     private String artifactIdPostfix = "";
     
     /**
      * Version of the artifact to be deployed.  Retrieved from POM file if specified.
      *
-     * @parameter expression="${version}"
      */
-    @MojoParameter(expression="${version}")
+    @Parameter(property="version")
+    //@MojoParameter(expression="${version}")
     private String version;
 
-    @MojoParameter(expression="${filePattern}",required=false,description="reg-ex pattern. If it matchs then group(1) will be artifactId and group(2) will be version")
+    /**
+     * reg-ex pattern. If it matchs then group(1) will be artifactId and group(2) will be version
+     */
+    @Parameter(property="filePattern",required=false)
+    //@MojoParameter(expression="${filePattern}",required=false,description="reg-ex pattern. If it matchs then group(1) will be artifactId and group(2) will be version")
     private String filePattern = null;
     
     /**
      * Description passed to a generated POM file (in case of generatePom=true)
      *
-     * @parameter expression="${generatePom.description}"
      */
+    @Parameter(property="generatePom.description")
     private String description;
     
     /**
      * Folder to be deployed.
      *
      */
-    @MojoParameter(expression="${project.build.directory}",required=true)
+    @Parameter(property="project.build.directory",required=true)
+    //@MojoParameter(expression="${project.build.directory}",required=true)
     private File outputFolder;
     
     /**
      * Folder to be deployed.
      *
      */
-    @MojoParameter(expression="${sourceFolder}",required=true)
+    @Parameter(property="sourceFolder",required=true)
+    //@MojoParameter(expression="${sourceFolder}",required=true)
     private File sourceFolder;
 
     /**
@@ -112,7 +125,8 @@ public class DeployFolderMojo extends AbstractDeployMojo
      * In most cases, this parameter will be required for authentication.
      *
      */
-    @MojoParameter(expression="${repositoryId}", defaultValue="remote-repository")
+    @Parameter(property="repositoryId", defaultValue="remote-repository")
+    //@MojoParameter(expression="${repositoryId}", defaultValue="remote-repository")
     private String repositoryId;
 
     /**
@@ -120,14 +134,16 @@ public class DeployFolderMojo extends AbstractDeployMojo
      * a Maven 1.x-style repository layout.
      * 
      */
-    @MojoParameter(expression="${repositoryLayout}", defaultValue="default",required=true)
+    @Parameter(property="repositoryLayout", defaultValue="default",required=true)
+    //@MojoParameter(expression="${repositoryLayout}", defaultValue="default",required=true)
     private String repositoryLayout;
 
     /**
      * Map that contains the layouts
      *
      */
-    @MojoComponent(role="org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout")
+    @Component(role=org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout.class)
+    //@MojoComponent(role="org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout")
     private Map<String,ArtifactRepositoryLayout> repositoryLayouts;
 
     /**
@@ -135,21 +151,24 @@ public class DeployFolderMojo extends AbstractDeployMojo
      * ie ( file://C:\m2-repo or scp://host.com/path/to/repo )
      *
      */
-    @MojoParameter(expression="${url}",required=true)
+    @Parameter(property="url",required=true)
+    //@MojoParameter(expression="${url}",required=true)
     private String url;
 
     /**
      * Component used to create an artifact
      *
      */
-    @MojoComponent
+    @Component
+    //@MojoComponent
     private ArtifactFactory artifactFactory;
 
     /**
      * Component used to create a repository
      *
      */
-    @MojoComponent
+    @Component
+    //@MojoComponent
     private ArtifactRepositoryFactory repositoryFactory;
 
     /**
@@ -157,7 +176,8 @@ public class DeployFolderMojo extends AbstractDeployMojo
      * supplied with the pomFile argument.
      *
      */
-    @MojoParameter(expression="${generatePom}",defaultValue="true")
+    @Parameter(property="generatePom",defaultValue="true")
+    //@MojoParameter(expression="${generatePom}",defaultValue="true")
     private boolean generatePom;
 
     /**
@@ -165,7 +185,8 @@ public class DeployFolderMojo extends AbstractDeployMojo
      *
      * @parameter expression="${uniqueVersion}" default-value="true"
      */
-    @MojoParameter(expression="${uniqueVersion}", defaultValue="true")
+    @Parameter(property="uniqueVersion", defaultValue="true")
+    //@MojoParameter(expression="${uniqueVersion}", defaultValue="true")
     private boolean uniqueVersion;
 
     /**
