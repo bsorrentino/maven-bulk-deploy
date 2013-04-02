@@ -30,6 +30,7 @@ public abstract class AbstractDeployMojo extends AbstractMojo
     //@MojoParameter(expression="${localRepository}",required=true,readonly=true)
     private ArtifactRepository localRepository;
     
+    @Override
     public abstract void execute() throws MojoExecutionException, MojoFailureException;
     
     /* Setters and Getters */
