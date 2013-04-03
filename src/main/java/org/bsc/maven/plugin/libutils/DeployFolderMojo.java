@@ -47,8 +47,8 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     /**
      * add generated dependency to pom
      */
-    @Parameter(defaultValue = "true")
-    private boolean updatePom = true;
+    @Parameter(defaultValue = "false")
+    private boolean updatePom = false;
     ;
 
     /**
