@@ -56,6 +56,11 @@
       <version>3.0.10</version>
     </dependency>
 
+    <dependency>
+        <artifactId>junit</artifactId>
+        <groupId>junit</groupId>
+        <version>4.11</version>   
+    </dependency>
  
 </dependencies>
   
