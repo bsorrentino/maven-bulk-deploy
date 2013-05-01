@@ -44,12 +44,12 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
     @Component
     protected MavenProject project;
+    
     /**
      * add generated dependency to pom
      */
-    @Parameter(defaultValue = "false")
-    private boolean updatePom = false;
-    ;
+    @Parameter(defaultValue = "false", property = "deploy.updatePom" )
+    private boolean _updatePom;
 
     /**
      * preview mode
@@ -218,7 +218,8 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
     private void updatePom() {
 
-        if (!updatePom) {
+        if (!_updatePom) {
+            getLog().info("Pom update skipped!");
             return;
         }
 
@@ -342,11 +343,13 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
                     a = execute(f, null);
                 } else {
                     a = execute(f, deploymentRepository);
+                    
+                    if( !preview ) {
+                        
+                        deployedFiles.setProperty(f.getName(), f.getAbsolutePath());
 
-                    deployedFiles.setProperty(f.getName(), f.getAbsolutePath());
-
-                    deployedFiles.store(new java.io.FileWriter(checkFile), "artifact deployed");
-
+                        deployedFiles.store(new java.io.FileWriter(checkFile), "artifact deployed");
+                    }
 
                 }
 
