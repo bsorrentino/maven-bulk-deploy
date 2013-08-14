@@ -122,6 +122,8 @@
       <configuration>
         <message>Creating site for ${project.version}</message>
         <server>github</server>
+        <repositoryName>maven-bulk-deploy</repositoryName>
+        <repositoryOwner>bsorrentino</repositoryOwner>
       </configuration>
       <executions>
         <execution>
