@@ -43,13 +43,10 @@
     <release.repo.id>sonatype-repo</release.repo.id>
     <release.repo.url>https://oss.sonatype.org/service/local/staging/deploy/maven2</release.repo.url>
 
-<!-- DOCUMENTATION -->
+<!-- DOCUMENTATION 
     <svn.release.site.url>svn:https://bsc-documentation-repo.googlecode.com/svn/trunk/maven-annotation-plugin/site</svn.release.site.url>
     <svn.release.site.id>google-project</svn.release.site.id>
-    <release.site.url>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</release.site.url>
-    <release.site.id>github</release.site.id>
-
-    <github.global.server>github</github.global.server>
+-->
 </properties>
 
 <inceptionYear>2009</inceptionYear>
@@ -121,9 +118,10 @@
     <plugin>
       <groupId>com.github.github</groupId>
       <artifactId>site-maven-plugin</artifactId>
-      <version>0.6</version>
+      <version>0.8</version>
       <configuration>
         <message>Creating site for ${project.version}</message>
+        <server>github</server>
       </configuration>
       <executions>
         <execution>
