@@ -6,8 +6,8 @@
   <artifactId>bulk-deploy</artifactId>
   <version>1.0-beta3-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
-  <name>libraries utilities mojo - ${project.version}</name>
-  <description>plugin to install &amp; deploy libraries from folder</description>
+  <name>Maven Bulk Deploy Plugin - ${project.version}</name>
+  <description>plugin make easy to implements BOM approach. It allows to install &amp; deploy libraries from folder(s) generating BOM file. </description>
   <url>https://github.com/bsorrentino/maven-bulk-deploy</url>
   
 <prerequisites>
