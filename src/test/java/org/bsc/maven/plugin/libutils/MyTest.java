@@ -52,4 +52,18 @@ public class MyTest {
         Assert.assertThat( m.groupCount(), IsEqual.equalTo(2));
         }
     }
+    
+    @Test
+    public void getArtifactCoordinateFromJar() throws Exception {
+        
+        final java.io.File jar = new java.io.File("src/test/resources/log4j.jar");
+        final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
+        
+        final boolean success = MojoUtils.getArtifactCoordinateFromJar(jarFile, (artifact) -> {
+            
+            System.out.printf( "artifact [%s] found for [%s] ", artifact, jar.getName() );
+        });
+        
+        Assert.assertThat( success, Is.is(true));
+    }
 }
