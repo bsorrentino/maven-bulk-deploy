@@ -55,7 +55,8 @@ public class MyTest {
     
     @Test
     public void getArtifactCoordinateFromJar() throws Exception {
-        
+    
+        {
         final java.io.File jar = new java.io.File("src/test/resources/log4j.jar");
         final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
         
@@ -65,5 +66,17 @@ public class MyTest {
         });
         
         Assert.assertThat( success, Is.is(true));
+        }
+        
+        {
+        final java.io.File jar = new java.io.File("src/test/resources/flexlm.jar");
+        final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
+        
+        final boolean success = MojoUtils.getArtifactCoordinateFromJar(jarFile, (artifact) -> {           
+            Assert.fail("onsuccess closure must not be invoked!");
+        });
+        
+        Assert.assertThat( success, Is.is(false));
+        }
     }
 }
