@@ -194,30 +194,6 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     //@MojoParameter(expression="${uniqueVersion}", defaultValue="true")
     private boolean uniqueVersion;
 
-    /**
-     *
-     * @param pomFile
-     * @throws MojoExecutionException
-     */
-    protected void initProperties(File pomFile) throws MojoExecutionException {
-
-        // Process the supplied POM (if there is one)
-        if (pomFile != null) {
-            generatePom = false;
-
-            Model model = readModel(pomFile);
-
-            processModel(model);
-        }
-        /*
-         // Verify arguments
-         if ( groupId == null || artifactId == null || version == null || packaging == null )
-         {
-         throw new MojoExecutionException( "Missing group, artifact, version, or packaging information" );
-         }
-         */
-    }
-
     private void updatePom() {
 
         if (!_updatePom) {
@@ -502,46 +478,6 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         }
 
         return result;
-    }
-
-    /**
-     * Process the supplied pomFile to get groupId, artifactId, version, and
-     * packaging
-     *
-     * @throws NullPointerException if model is <code>null</code>
-     */
-    private void processModel(Model model) {
-        /*
-         Parent parent = model.getParent();
-
-         if ( this.groupId == null )
-         {
-         if ( parent != null && parent.getGroupId() != null )
-         {
-         this.groupId = parent.getGroupId();
-         }
-         if ( model.getGroupId() != null )
-         {
-         this.groupId = model.getGroupId();
-         }
-         }
-         if ( this.artifactId == null && model.getArtifactId() != null )
-         {
-         this.artifactId = model.getArtifactId();
-         }
-         if ( this.version == null )
-         {
-         this.version = model.getVersion();
-         if ( this.version == null && parent != null )
-         {
-         this.version = parent.getVersion();
-         }
-         }
-         if ( this.packaging == null && model.getPackaging() != null )
-         {
-         this.packaging = model.getPackaging();
-         }
-         */
     }
 
     /**
