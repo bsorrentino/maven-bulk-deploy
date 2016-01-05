@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
@@ -31,6 +30,8 @@ import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.WriterFactory;
+import static java.lang.String.format;
+import org.bsc.functional.Fn;
 
 /**
  * Installs artifacts from folder to remote repository.
@@ -195,6 +196,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
     /**
      *
+     * @param pomFile
      * @throws MojoExecutionException
      */
     protected void initProperties(File pomFile) throws MojoExecutionException {
@@ -248,7 +250,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             return;
         }
 
-        java.io.FileWriter deps = new java.io.FileWriter(DEPENDENCIES_FILENAME);
+        final java.io.FileWriter deps = new java.io.FileWriter(DEPENDENCIES_FILENAME);
 
         deps.append("<dependencies>");
 
@@ -291,6 +293,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
     /**
      *
+     * @throws org.apache.maven.plugin.MojoExecutionException
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -319,7 +322,6 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
         try {
 
-
             java.io.File checkFile = new java.io.File(outputFolder, "deployed.properties");
             java.util.Properties deployedFiles = new java.util.Properties();
 
@@ -332,7 +334,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
             java.util.List<File> files = FileUtils.getFiles(sourceFolder, join(includes, ','), join(excludes, ','));
 
-            java.util.List<Artifact> artifactList = new java.util.ArrayList<Artifact>(files.size());
+            java.util.List<Artifact> artifactList = new java.util.ArrayList<>(files.size());
             getLog().info("process files " + files.size());
 
             for (File f : files) {
@@ -406,68 +408,100 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             throw new MojoExecutionException("file name without extension " + name);
         }
 
-        String candidateArtifactId = name.substring(0, index);
-        String candidateArtifactVersion = version;
-        final String packaging = name.substring(++index);
+        String candidateArtifactId      = name.substring(0, index);
+        final String packaging          = name.substring(++index);
 
-        if (null != filePattern) {
+        Artifact result = null;
+        
+        if( "jar".compareToIgnoreCase(packaging)==0 ) {
+            
+            final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( file );
 
-            try {
-                Pattern p = Pattern.compile(filePattern);
-                Matcher m = p.matcher(candidateArtifactId);
+            result =  MojoUtils.getArtifactCoordinateFromPropsInJar(jarFile, new Fn<java.util.Properties,Artifact>() {
 
-                if (m.matches()) {
-
-                    if (m.groupCount() == 1) {
-                        candidateArtifactId = m.group(0);
-                        candidateArtifactVersion = m.group(1);
-                    } else if (m.groupCount() == 2) {
-                        candidateArtifactId = m.group(1);
-                        candidateArtifactVersion = m.group(2);
-                    }
-
-                } else {
-                    getLog().warn(String.format("[%s] doesn't match pattern %s", candidateArtifactId, filePattern));
+                @Override
+                public Artifact f(java.util.Properties props) {
+                    
+                    final Artifact artifact = 
+                            artifactFactory.createBuildArtifact(
+                                            props.getProperty("groupId"), 
+                                            props.getProperty("artifactId"),
+                                            props.getProperty("version"), 
+                                            props.getProperty("packaging", "jar"));
+                    getLog().info( format("artifact [%s] is already a maven artifact!", artifact));
+                    
+                    return artifact;
                 }
-            } catch (Exception ex) {
-                getLog().warn("error during parse the file name", ex);
+            });
+        }
+        
+        final boolean isMavenArtifact =  result != null;
+        
+        if( !isMavenArtifact ) {
+            String candidateArtifactVersion = version;
+
+            if (null != filePattern) {
+
+                try {
+                    Pattern p = Pattern.compile(filePattern);
+                    Matcher m = p.matcher(candidateArtifactId);
+
+                    if (m.matches()) {
+
+                        if (m.groupCount() == 1) {
+                            candidateArtifactId = m.group(0);
+                            candidateArtifactVersion = m.group(1);
+                        } else if (m.groupCount() == 2) {
+                            candidateArtifactId = m.group(1);
+                            candidateArtifactVersion = m.group(2);
+                        }
+
+                    } else {
+                        getLog().warn(String.format("[%s] doesn't match pattern %s", candidateArtifactId, filePattern));
+                    }
+                } catch (Exception ex) {
+                    getLog().warn("error during parse the file name", ex);
+                }
             }
+
+            final String artifactId = new StringBuilder()
+                    .append(artifactIdPrefix)
+                    .append(candidateArtifactId)
+                    .append(artifactIdPostfix)
+                    .toString();
+
+
+            // Create the artifact
+            result = artifactFactory.createBuildArtifact(groupId, artifactId, candidateArtifactVersion, packaging);
+            getLog().info("resulting artifact " + result);
         }
-
-
-        final String artifactId = new StringBuilder()
-                .append(artifactIdPrefix)
-                .append(candidateArtifactId)
-                .append(artifactIdPostfix)
-                .toString();
-
-
-        final File pomFile = null;
-
-        // Create the artifact
-        Artifact artifact = artifactFactory.createBuildArtifact(groupId, artifactId, candidateArtifactVersion, packaging);
-        getLog().info("resulting artifact " + artifact);
-
+        
         if (preview || deploymentRepository == null) {
-            return artifact;
+            return result;
         }
+
 
         // Upload the POM if requested, generating one if need be
-        if (generatePom) {
-            ArtifactMetadata metadata = new ProjectArtifactMetadata(artifact, generatePomFile(artifactId, packaging, candidateArtifactVersion));
-            artifact.addMetadata(metadata);
-        } else {
-            ArtifactMetadata metadata = new ProjectArtifactMetadata(artifact, pomFile);
-            artifact.addMetadata(metadata);
+        if (!isMavenArtifact && generatePom) {
+            ProjectArtifactMetadata metadata = 
+                    new ProjectArtifactMetadata(result, 
+                                                generatePomFile(result.getArtifactId(), packaging, result.getVersion()));
+            result.addMetadata(metadata);
         }
-
+        /*
+        final File pomFile = null;
+        else {
+            ProjectArtifactMetadata metadata = new ProjectArtifactMetadata(result, pomFile);
+            result.addMetadata(metadata);
+        }
+        */
         try {
-            getDeployer().deploy(file, artifact, deploymentRepository, getLocalRepository());
+            getDeployer().deploy(file, result, deploymentRepository, getLocalRepository());
         } catch (ArtifactDeploymentException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
 
-        return artifact;
+        return result;
     }
 
     /**
