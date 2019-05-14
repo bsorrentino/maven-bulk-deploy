@@ -9,7 +9,6 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
-import static org.bsc.maven.plugin.libutils.Constants.POM_BACKUP_FILENAME;
 
 /**
  * Remove backup file(s)

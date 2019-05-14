@@ -28,17 +28,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Enumeration;
+import java.util.function.Function;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
+
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.bsc.functional.F;
-import org.bsc.functional.Fn;
-import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
@@ -62,10 +59,10 @@ public class MojoUtils {
     public static Model readModel( InputStream pomFile )
         throws MojoExecutionException
     {
-        Reader reader = null;
-        try
+        
+        try( Reader reader = ReaderFactory.newXmlReader( pomFile ); )
         {
-            reader = ReaderFactory.newXmlReader( pomFile );
+            
             return new MavenXpp3Reader().read( reader );
         }
         catch ( FileNotFoundException e )
@@ -80,10 +77,6 @@ public class MojoUtils {
         {
             throw new MojoExecutionException( "Error parsing POM " + pomFile, e );
         }
-        finally
-        {
-            IOUtil.close( reader );
-        }
     }
 
         /**
@@ -96,7 +89,7 @@ public class MojoUtils {
      * @throws org.apache.maven.plugin.MojoExecutionException 
      */
     public static <T> T getArtifactCoordinateFromPropsInJar( JarFile jarFile, 
-                                                        Fn<java.util.Properties,T> creator ) throws IOException, MojoExecutionException 
+                                                        Function<java.util.Properties,T> creator ) throws IOException, MojoExecutionException 
     {
         
         if( jarFile==null ) throw new IllegalArgumentException("jar parameter is null!");
@@ -132,7 +125,7 @@ public class MojoUtils {
                                                     null // ArtifactHandler
                                                    );
                         */
-                        return creator.f( props );
+                        return creator.apply( props );
                     }
                 }
             }
@@ -151,7 +144,7 @@ public class MojoUtils {
      * @throws org.apache.maven.plugin.MojoExecutionException 
      */
     public static <T> T getArtifactCoordinateFromXmlInJar( JarFile jarFile, 
-                                                        Fn<Model,T> creator ) throws IOException, MojoExecutionException 
+                                                       Function<Model,T> creator ) throws IOException, MojoExecutionException 
     {
         
         if( jarFile==null ) throw new IllegalArgumentException("jar parameter is null!");
@@ -169,8 +162,8 @@ public class MojoUtils {
 
                     try( InputStream pomInputStream = jarFile.getInputStream( entry ) )
                     {
-                        final String scope = "";
-                        final String classifier = "";
+                        //final String scope = "";
+                        //final String classifier = "";
                         
                         final Model model = readModel( pomInputStream );
                            
@@ -185,7 +178,7 @@ public class MojoUtils {
                                                     null // ArtifactHandler
                                                    );
                         */                           
-                        return creator.f( model );
+                        return creator.apply( model );
 
                     }
                 }

@@ -6,9 +6,9 @@ package org.bsc.maven.plugin.libutils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
-import org.bsc.functional.Fn;
 import org.hamcrest.core.Is;
 import org.hamcrest.core.IsEqual;
 import org.hamcrest.core.IsNull;
@@ -63,10 +63,7 @@ public class MyTest {
         final java.io.File jar = new java.io.File("src/test/resources/log4j.jar");
         final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
         
-        final Artifact result = MojoUtils.getArtifactCoordinateFromPropsInJar(jarFile, new Fn<java.util.Properties,Artifact>() {
-            
-            @Override
-            public Artifact f(java.util.Properties props) {
+        final Artifact result = MojoUtils.getArtifactCoordinateFromPropsInJar(jarFile, (props) ->  {
                 final String scope = "";
                 final String classifier = "";
 
@@ -78,7 +75,6 @@ public class MyTest {
                                             classifier, // classifier, 
                                             null // ArtifactHandler
                                            );
-            }
         });
         
         Assert.assertThat( result, IsNull.notNullValue());
