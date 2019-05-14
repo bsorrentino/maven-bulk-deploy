@@ -61,12 +61,12 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     ;
 
     /**
-     * 
+     * A list of inclusion filters from sourceFolder
      */
     @Parameter()
     private String includes[] = new String[0];
     /**
-     *
+     * A list of exclusion filters from sourceFolder
      */
     @Parameter()
     private String excludes[] = new String[0];
@@ -298,7 +298,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             final java.util.List<File> files = getFiles(sourceFolder, join(includes, ','), join(excludes, ','));
 
             final java.util.List<Artifact> artifactList = new java.util.ArrayList<>(files.size());
-            getLog().info("process files " + files.size());
+            getLog().info( format( "process files %d", files.size()));
 
             for (File f : files) {
 
