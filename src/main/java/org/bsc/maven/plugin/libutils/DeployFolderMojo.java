@@ -2,6 +2,8 @@ package org.bsc.maven.plugin.libutils;
 
 import static java.lang.String.format;
 import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
+import static org.codehaus.plexus.util.FileUtils.copyFile;
+import static org.codehaus.plexus.util.FileUtils.getFiles;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +33,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
-import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 
@@ -189,7 +190,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
         try {
             final java.io.File backupFile = new java.io.File(project.getBasedir(), POM_BACKUP_FILENAME);
-            FileUtils.copyFile(project.getFile(), backupFile);
+            copyFile(project.getFile(), backupFile);
         } catch (IOException ex) {
             getLog().error("error creating pom backup", ex);
             return;
@@ -294,7 +295,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
             }
 
-            final java.util.List<File> files = FileUtils.getFiles(sourceFolder, join(includes, ','), join(excludes, ','));
+            final java.util.List<File> files = getFiles(sourceFolder, join(includes, ','), join(excludes, ','));
 
             final java.util.List<Artifact> artifactList = new java.util.ArrayList<>(files.size());
             getLog().info("process files " + files.size());
