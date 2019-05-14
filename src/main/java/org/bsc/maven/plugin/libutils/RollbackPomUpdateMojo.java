@@ -8,8 +8,8 @@ import java.io.IOException;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
@@ -22,7 +22,7 @@ import org.codehaus.plexus.util.FileUtils;
         requiresProject = true)
 public class RollbackPomUpdateMojo extends AbstractDeployMojo implements Constants {
 
-    @Component()
+    @Parameter( defaultValue = "${project}", readonly = true )
     protected MavenProject project;
 
     @Override
