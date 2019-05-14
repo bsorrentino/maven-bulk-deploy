@@ -22,6 +22,7 @@ import org.codehaus.plexus.util.FileUtils;
 @Mojo(  name = "rollback", 
         requiresProject = true)
 public class RollbackPomUpdateMojo extends AbstractMojo implements Constants  {
+ 
     @Parameter( defaultValue = "${project}", readonly = true )
     protected MavenProject project;
 
