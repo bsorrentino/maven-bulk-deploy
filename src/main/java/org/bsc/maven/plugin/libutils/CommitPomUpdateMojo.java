@@ -4,6 +4,7 @@
  */
 package org.bsc.maven.plugin.libutils;
 
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -17,11 +18,11 @@ import org.apache.maven.project.MavenProject;
  */
 @Mojo(  name = "commit", 
         requiresProject = true)
-public class CommitPomUpdateMojo extends AbstractDeployMojo implements Constants {
-    
+public class CommitPomUpdateMojo extends AbstractMojo implements Constants  {
+
     @Parameter( defaultValue = "${project}", readonly = true )
     protected MavenProject project;
-
+    
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         

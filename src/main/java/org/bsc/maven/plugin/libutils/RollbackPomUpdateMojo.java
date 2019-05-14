@@ -6,6 +6,7 @@ package org.bsc.maven.plugin.libutils;
 
 import java.io.IOException;
 
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -20,10 +21,10 @@ import org.codehaus.plexus.util.FileUtils;
  */
 @Mojo(  name = "rollback", 
         requiresProject = true)
-public class RollbackPomUpdateMojo extends AbstractDeployMojo implements Constants {
-
+public class RollbackPomUpdateMojo extends AbstractMojo implements Constants  {
     @Parameter( defaultValue = "${project}", readonly = true )
     protected MavenProject project;
+
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {

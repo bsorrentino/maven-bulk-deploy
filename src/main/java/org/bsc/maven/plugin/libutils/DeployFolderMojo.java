@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.deployer.ArtifactDeployer;
 import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
@@ -44,7 +43,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
     @Parameter( defaultValue = "${project}", readonly = true )
     protected MavenProject project;
-    
+
     /**
      * add generated dependency to pom
      */
@@ -148,12 +147,6 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      */
     @Parameter(property = "url", required = true)
     private String url;
-    /**
-     * Component used to create an artifact
-     *
-     */
-    @Component
-    private ArtifactDeployer artifactFactory;
     /**
      * Component used to create a repository
      *
