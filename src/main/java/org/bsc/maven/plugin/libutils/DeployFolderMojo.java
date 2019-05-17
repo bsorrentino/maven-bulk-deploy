@@ -1,11 +1,15 @@
 package org.bsc.maven.plugin.libutils;
 
 import static java.lang.String.format;
+import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
+import static org.codehaus.plexus.util.FileUtils.copyFile;
+import static org.codehaus.plexus.util.FileUtils.getFiles;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +33,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
-import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 
@@ -58,12 +61,12 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     ;
 
     /**
-     * 
+     * A list of inclusion filters from sourceFolder
      */
     @Parameter()
     private String includes[] = new String[0];
     /**
-     *
+     * A list of exclusion filters from sourceFolder
      */
     @Parameter()
     private String excludes[] = new String[0];
@@ -164,16 +167,19 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      *
      */
     @Parameter(property = "generatePom", defaultValue = "true")
-    //@MojoParameter(expression="${generatePom}",defaultValue="true")
     private boolean generatePom;
     /**
      * Whether to deploy snapshots with a unique version or not.
      *
      * @parameter expression="${uniqueVersion}" default-value="true"
      */
-    //@MojoParameter(expression="${uniqueVersion}", defaultValue="true")
     private boolean uniqueVersion;
 
+    /**
+     * issue #2 : skip check pom.properties inside jar
+     */
+    @Parameter(property = "ignorePomProperties", defaultValue = "false")
+    private boolean ignorePomProperties;
     
     private void updatePom() {
 
@@ -184,7 +190,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
         try {
             final java.io.File backupFile = new java.io.File(project.getBasedir(), POM_BACKUP_FILENAME);
-            FileUtils.copyFile(project.getFile(), backupFile);
+            copyFile(project.getFile(), backupFile);
         } catch (IOException ex) {
             getLog().error("error creating pom backup", ex);
             return;
@@ -269,7 +275,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
         final String protocol = deploymentRepository.getProtocol();
 
-        if ("".equals(protocol) || protocol == null) {
+        if ( protocol == null || "".equals(protocol) ) {
             throw new MojoExecutionException("No transfer protocol found.");
         }
 
@@ -281,16 +287,18 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             final java.util.Properties deployedFiles = new java.util.Properties();
 
             if (checkFile.exists()) {
-                deployedFiles.load(new java.io.FileReader(checkFile));
+                try ( final java.io.Reader checkFileReader =  new java.io.FileReader(checkFile) ) {
+                    deployedFiles.load(checkFileReader);
+                }
             } else {
                 outputFolder.mkdirs();
 
             }
 
-            final java.util.List<File> files = FileUtils.getFiles(sourceFolder, join(includes, ','), join(excludes, ','));
+            final java.util.List<File> files = getFiles(sourceFolder, join(includes, ','), join(excludes, ','));
 
             final java.util.List<Artifact> artifactList = new java.util.ArrayList<>(files.size());
-            getLog().info("process files " + files.size());
+            getLog().info( format( "process files %d", files.size()));
 
             for (File f : files) {
 
@@ -305,7 +313,9 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
                         
                         deployedFiles.setProperty(f.getName(), f.getAbsolutePath());
 
-                        deployedFiles.store(new java.io.FileWriter(checkFile), "artifact deployed");
+                        try( java.io.Writer checkFileWriter = new java.io.FileWriter(checkFile)) {
+                            deployedFiles.store( checkFileWriter, "artifact deployed");                            
+                        }
                     }
 
                 }
@@ -423,18 +433,23 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         final String packaging        = name.substring(++index);
 
         Artifact result = null;
+        boolean isMavenArtifact =  false;
         
-        if( "jar".compareToIgnoreCase(packaging)==0 ) {
+        if( !ignorePomProperties && "jar".compareToIgnoreCase(packaging)==0 ) {
             
             final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( file );
 
-            result =  MojoUtils.getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact );
-            getLog().info( format("artifact [%s] is already a maven artifact!", result));
-
+            final Optional<Artifact> artifact = 
+                    getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact );
+            
+            if( artifact.isPresent() ) {
+                result = artifact.get();
+                getLog().info( format("artifact [%s] is already a maven artifact!", result));
+                isMavenArtifact = true;
+            }
+         
         }
-        
-        final boolean isMavenArtifact =  result != null;
-        
+               
         if( !isMavenArtifact ) {
             String candidateArtifactVersion = version;
 

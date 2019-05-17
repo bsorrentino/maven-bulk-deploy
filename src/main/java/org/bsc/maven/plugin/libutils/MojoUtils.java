@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Enumeration;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -88,7 +89,7 @@ public class MojoUtils {
      * @throws java.io.IOException 
      * @throws org.apache.maven.plugin.MojoExecutionException 
      */
-    public static <T> T getArtifactCoordinateFromPropsInJar( JarFile jarFile, 
+    public static <T> Optional<T> getArtifactCoordinateFromPropsInJar( JarFile jarFile, 
                                                         Function<java.util.Properties,T> creator ) throws IOException, MojoExecutionException 
     {
         
@@ -100,7 +101,7 @@ public class MojoUtils {
         if( jarEntries!=null ) {
             while ( jarEntries.hasMoreElements() )
             {
-                JarEntry entry = jarEntries.nextElement();
+                final JarEntry entry = jarEntries.nextElement();
 
                 if ( POM_PROPERTIES.matcher( entry.getName() ).matches() )
                 {
@@ -125,13 +126,13 @@ public class MojoUtils {
                                                     null // ArtifactHandler
                                                    );
                         */
-                        return creator.apply( props );
+                        return Optional.ofNullable(creator.apply( props ));
                     }
                 }
             }
         }
         
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -143,7 +144,7 @@ public class MojoUtils {
      * @throws java.io.IOException 
      * @throws org.apache.maven.plugin.MojoExecutionException 
      */
-    public static <T> T getArtifactCoordinateFromXmlInJar( JarFile jarFile, 
+    public static <T> Optional<T> getArtifactCoordinateFromXmlInJar( JarFile jarFile, 
                                                        Function<Model,T> creator ) throws IOException, MojoExecutionException 
     {
         
@@ -178,13 +179,13 @@ public class MojoUtils {
                                                     null // ArtifactHandler
                                                    );
                         */                           
-                        return creator.apply( model );
+                        return Optional.ofNullable(creator.apply( model ));
 
                     }
                 }
             }
         }
         
-        return null;
+        return Optional.empty();
     }
 }
