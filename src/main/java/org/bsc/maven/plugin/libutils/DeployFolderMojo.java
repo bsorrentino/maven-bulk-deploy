@@ -1,18 +1,5 @@
 package org.bsc.maven.plugin.libutils;
 
-import static java.lang.String.format;
-import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
-import static org.codehaus.plexus.util.FileUtils.copyFile;
-import static org.codehaus.plexus.util.FileUtils.getFiles;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
@@ -36,12 +23,26 @@ import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
+import static org.codehaus.plexus.util.FileUtils.copyFile;
+import static org.codehaus.plexus.util.FileUtils.getFiles;
+
 /**
  * Installs artifacts from folder to remote repository.
  *
  */
-@Mojo(name = "deploy-folder",
-        requiresProject = true)
+@Mojo(name = "deploy-folder")
 public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
     @Parameter( defaultValue = "${project}", readonly = true )
@@ -58,18 +59,17 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      */
     @Parameter(defaultValue = "false")
     private boolean preview = false;
-    ;
 
     /**
      * A list of inclusion filters from sourceFolder
      */
     @Parameter()
-    private String includes[] = new String[0];
+    private String[] includes = new String[0];
     /**
      * A list of exclusion filters from sourceFolder
      */
     @Parameter()
-    private String excludes[] = new String[0];
+    private String[] excludes = new String[0];
     /**
      * GroupId of the artifact to be deployed. Retrieved from POM file if
      * specified.
@@ -82,14 +82,14 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      * file if specified.
      *
      */
-    @Parameter(property = "artifactId-prefix", defaultValue = "")
+    @Parameter(property = "artifactId-prefix")
     private String artifactIdPrefix = "";
     /**
      * ArtifactId postfix of the artifacts to be deployed. Retrieved from POM
      * file if specified.
      *
      */
-    @Parameter(property = "artifactId-postfix", defaultValue = "")
+    @Parameter(property = "artifactId-postfix")
     private String artifactIdPostfix = "";
     /**
      * Version of the artifact to be deployed. Retrieved from POM file if
@@ -102,7 +102,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      * reg-ex pattern. If it matchs then group(1) will be artifactId and
      * group(2) will be version
      */
-    @Parameter(property = "filePattern", required = false)
+    @Parameter(property = "filePattern")
     private String filePattern = null;
     /**
      * Description passed to a generated POM file (in case of generatePom=true)
@@ -174,6 +174,9 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      * @parameter expression="${uniqueVersion}" default-value="true"
      */
     private boolean uniqueVersion;
+
+    @Parameter(property = "useSameGroupIdAsArtifactId", defaultValue = "false")
+    private boolean useSameGroupIdAsArtifactId;
 
     /**
      * issue #2 : skip check pom.properties inside jar
@@ -451,42 +454,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         }
                
         if( !isMavenArtifact ) {
-            String candidateArtifactVersion = version;
-
-            if (null != filePattern) {
-
-                try {
-                    final Pattern p = Pattern.compile(filePattern);
-                    final Matcher m = p.matcher(candidateArtifactId);
-
-                    if (m.matches()) {
-
-                        if (m.groupCount() == 1) {
-                            candidateArtifactId = m.group(0);
-                            candidateArtifactVersion = m.group(1);
-                        } else if (m.groupCount() == 2) {
-                            candidateArtifactId = m.group(1);
-                            candidateArtifactVersion = m.group(2);
-                        }
-
-                    } else {
-                        getLog().warn(String.format("[%s] doesn't match pattern %s", candidateArtifactId, filePattern));
-                    }
-                } catch (Exception ex) {
-                    getLog().warn("error during parse the file name", ex);
-                }
-            }
-
-            final String artifactId = new StringBuilder()
-                    .append(artifactIdPrefix)
-                    .append(candidateArtifactId)
-                    .append(artifactIdPostfix)
-                    .toString();
-
-
-            // Create the artifact
-            result = createBuildArtifact(groupId, artifactId, candidateArtifactVersion, packaging);
-            getLog().info( format("resulting artifact %s", result ));
+            result = createNotStandardArtifact(candidateArtifactId, packaging);
         }
         
         if (preview || deploymentRepository == null) {
@@ -514,6 +482,56 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             throw new MojoExecutionException(e.getMessage(), e);
         }
 
+        return result;
+    }
+
+    private Artifact createNotStandardArtifact(String candidateArtifactId, String packaging) {
+        Artifact result;
+        String candidateArtifactVersion = version;
+
+        if (isBlank(filePattern)) {
+
+            try {
+                final Pattern p = Pattern.compile(filePattern);
+                final Matcher m = p.matcher(candidateArtifactId);
+
+                if (m.matches()) {
+
+                    if (m.groupCount() == 1) {
+                        candidateArtifactId = m.group(0);
+                        candidateArtifactVersion = m.group(1);
+                    } else if (m.groupCount() == 2) {
+                        candidateArtifactId = m.group(1);
+                        candidateArtifactVersion = m.group(2);
+                    }
+
+                } else {
+                    getLog().warn(String.format("[%s] doesn't match pattern %s", candidateArtifactId, filePattern));
+                }
+            } catch (Exception ex) {
+                getLog().warn("error during parse the file name", ex);
+            }
+        }else{
+            // try to deduce version number without regex as last  - separated group
+            if(isBlank(candidateArtifactVersion)) {
+                String[] parts = org.apache.commons.lang3.StringUtils.split(candidateArtifactId, "-");
+                if (parts != null && parts.length > 1 && org.apache.commons.lang3.StringUtils.containsOnly(parts[parts.length - 1], "0123456789.")) {
+                    candidateArtifactVersion = parts[parts.length - 1];
+                    candidateArtifactId = org.apache.commons.lang3.StringUtils.substringBeforeLast(candidateArtifactId, "-");
+                }
+            }
+        }
+
+        final String artifactId = new StringBuilder()
+                .append(artifactIdPrefix)
+                .append(candidateArtifactId)
+                .append(artifactIdPostfix)
+                .toString();
+
+
+        // Create the artifact
+        result = createBuildArtifact(defaultIfBlank(groupId, useSameGroupIdAsArtifactId ? artifactId : groupId), artifactId, candidateArtifactVersion, packaging);
+        getLog().info( format("resulting artifact %s", result ));
         return result;
     }
 
