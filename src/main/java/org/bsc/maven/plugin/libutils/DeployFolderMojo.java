@@ -171,10 +171,32 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     /**
      * Whether to deploy snapshots with a unique version or not.
      *
-     * @parameter expression="${uniqueVersion}" default-value="true"
      */
+    @Parameter( property = "uniqueVersion", defaultValue = "true")
     private boolean uniqueVersion;
-
+    /**
+     * For not maven standard artifacts a new not mandatory parameter like useSameGroupIdAsArtifactId could be useful to avoid the awkwardness of regex groups matching
+     * artifactId and GroupId.
+     * 
+     * A thumb rule could be:
+     *  - take all filename content after the last - and before file extension and manage it as a fallback to version parameter.
+     *  - all content before the last - or before .jar identify both artifactId and GroupId.
+     * Example:
+     *
+     * guava-19.0.jar
+     *
+     * If version not set and useSameGroupIdAsArtifactId = true
+     *
+     *    groupId:      guava
+     *    artifactId:   guava
+     *    version:      19.0
+     *
+     *    if version set to xxx and useSameGroupIdAsArtifactId = true
+     * 
+     *    groupId:      guava-19.0
+     *    artifactId:   guava-19.0
+     *    version:      xxx
+     */
     @Parameter(property = "useSameGroupIdAsArtifactId", defaultValue = "false")
     private boolean useSameGroupIdAsArtifactId;
 
@@ -514,7 +536,9 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         }else{
             // try to deduce version number without regex as last  - separated group
             if(isBlank(candidateArtifactVersion)) {
-                String[] parts = org.apache.commons.lang3.StringUtils.split(candidateArtifactId, "-");
+
+                final String[] parts = org.apache.commons.lang3.StringUtils.split(candidateArtifactId, "-");
+                
                 if (parts != null && parts.length > 1 && org.apache.commons.lang3.StringUtils.containsOnly(parts[parts.length - 1], "0123456789.")) {
                     candidateArtifactVersion = parts[parts.length - 1];
                     candidateArtifactId = org.apache.commons.lang3.StringUtils.substringBeforeLast(candidateArtifactId, "-");
