@@ -4,4 +4,4 @@
 .settings/
 target
 
-/pom.xml.versionsBackup
+,factorypath
