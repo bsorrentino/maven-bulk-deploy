@@ -28,19 +28,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Enumeration;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
+
 import org.apache.maven.model.Model;
-import org.apache.maven.model.Parent;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
-import org.bsc.functional.F;
-import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
@@ -52,7 +48,8 @@ public class MojoUtils {
     
     protected MojoUtils() {}
 
-    static final  Pattern pomEntry = Pattern.compile( "META-INF/maven/.*/pom\\.xml" );
+    static final  Pattern POM_ENTRY = Pattern.compile( "META-INF/maven/.*/pom\\.xml" );
+    static final  Pattern POM_PROPERTIES = Pattern.compile( "META-INF/maven/.*/pom\\.properties" );
 
     /**
      * 
@@ -63,10 +60,10 @@ public class MojoUtils {
     public static Model readModel( InputStream pomFile )
         throws MojoExecutionException
     {
-        Reader reader = null;
-        try
+        
+        try( Reader reader = ReaderFactory.newXmlReader( pomFile ); )
         {
-            reader = ReaderFactory.newXmlReader( pomFile );
+            
             return new MavenXpp3Reader().read( reader );
         }
         catch ( FileNotFoundException e )
@@ -81,27 +78,78 @@ public class MojoUtils {
         {
             throw new MojoExecutionException( "Error parsing POM " + pomFile, e );
         }
-        finally
-        {
-            IOUtil.close( reader );
-        }
     }
 
-    
-    /**
+        /**
      * 
+     * @param <T>
      * @param jarFile
-     * @param onSuccess
-     * @return found
+     * @param creator
+     * @return Artifact
      * @throws java.io.IOException 
      * @throws org.apache.maven.plugin.MojoExecutionException 
      */
-    public static boolean getArtifactCoordinateFromJar( JarFile jarFile, 
-                                                        F<Artifact> onSuccess ) throws IOException, MojoExecutionException 
+    public static <T> Optional<T> getArtifactCoordinateFromPropsInJar( JarFile jarFile, 
+                                                        Function<java.util.Properties,T> creator ) throws IOException, MojoExecutionException 
     {
         
         if( jarFile==null ) throw new IllegalArgumentException("jar parameter is null!");
-        if( onSuccess==null ) throw new IllegalArgumentException("onSuccess parameter is null!");
+        if( creator==null ) throw new IllegalArgumentException("onSuccess parameter is null!");
+        
+        final Enumeration<JarEntry> jarEntries = jarFile.entries();
+
+        if( jarEntries!=null ) {
+            while ( jarEntries.hasMoreElements() )
+            {
+                final JarEntry entry = jarEntries.nextElement();
+
+                if ( POM_PROPERTIES.matcher( entry.getName() ).matches() )
+                {
+
+                    try( InputStream pomInputStream = jarFile.getInputStream( entry ) )
+                    {
+                        final java.util.Properties props = new java.util.Properties();
+                        
+                        props.load(pomInputStream);
+                        
+                        /*
+                        final String scope = "";
+                        final String classifier = "";
+                        
+                        final DefaultArtifact artifact = 
+                                new DefaultArtifact(props.getProperty("groupId"), 
+                                                    props.getProperty("artifactId"),
+                                                    props.getProperty("version"), 
+                                                    scope, // scope
+                                                    props.getProperty("packaging", "jar"), 
+                                                    classifier, // classifier, 
+                                                    null // ArtifactHandler
+                                                   );
+                        */
+                        return Optional.ofNullable(creator.apply( props ));
+                    }
+                }
+            }
+        }
+        
+        return Optional.empty();
+    }
+
+    /**
+     * 
+     * @param <T>
+     * @param jarFile
+     * @param creator
+     * @return Artifact
+     * @throws java.io.IOException 
+     * @throws org.apache.maven.plugin.MojoExecutionException 
+     */
+    public static <T> Optional<T> getArtifactCoordinateFromXmlInJar( JarFile jarFile, 
+                                                       Function<Model,T> creator ) throws IOException, MojoExecutionException 
+    {
+        
+        if( jarFile==null ) throw new IllegalArgumentException("jar parameter is null!");
+        if( creator==null ) throw new IllegalArgumentException("onSuccess parameter is null!");
         
         final Enumeration<JarEntry> jarEntries = jarFile.entries();
 
@@ -110,37 +158,34 @@ public class MojoUtils {
             {
                 JarEntry entry = jarEntries.nextElement();
 
-                if ( pomEntry.matcher( entry.getName() ).matches() )
+                if ( POM_ENTRY.matcher( entry.getName() ).matches() )
                 {
-                    InputStream pomInputStream = null;
 
-                    try
+                    try( InputStream pomInputStream = jarFile.getInputStream( entry ) )
                     {
-                        pomInputStream = jarFile.getInputStream( entry );
-
+                        //final String scope = "";
+                        //final String classifier = "";
+                        
                         final Model model = readModel( pomInputStream );
-
-                        DefaultArtifact artifact = 
+                           
+                        /*
+                        final DefaultArtifact artifact = 
                                 new DefaultArtifact(model.getGroupId(), 
                                                     model.getArtifactId(),
                                                     model.getVersion(), 
-                                                    "", // scope
+                                                    scope, // scope
                                                     model.getPackaging(), 
-                                                    "", // classifier, 
+                                                    classifier, // classifier, 
                                                     null // ArtifactHandler
                                                    );
-                        onSuccess.f( artifact );
+                        */                           
+                        return Optional.ofNullable(creator.apply( model ));
 
-                        return true;
-                    }
-                    finally
-                    {
-                        IOUtil.close( pomInputStream );
                     }
                 }
             }
         }
         
-        return false;
+        return Optional.empty();
     }
 }

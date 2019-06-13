@@ -4,8 +4,15 @@
  */
 package org.bsc.maven.plugin.libutils;
 
+import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
+import static org.hamcrest.core.Is.is;
+
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.hamcrest.core.Is;
 import org.hamcrest.core.IsEqual;
 import org.junit.Assert;
@@ -56,27 +63,23 @@ public class MyTest {
     @Test
     public void getArtifactCoordinateFromJar() throws Exception {
     
-        {
         final java.io.File jar = new java.io.File("src/test/resources/log4j.jar");
         final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
         
-        final boolean success = MojoUtils.getArtifactCoordinateFromJar(jarFile, (artifact) -> {
-            
-            System.out.printf( "artifact [%s] found for [%s] ", artifact, jar.getName() );
+        final Optional<Artifact> result = getArtifactCoordinateFromPropsInJar(jarFile, (props) ->  {
+                final String scope = "";
+                final String classifier = "";
+
+                return new DefaultArtifact(props.getProperty("groupId"), 
+                                            props.getProperty("artifactId"),
+                                            props.getProperty("version"), 
+                                            scope, // scope
+                                            props.getProperty("packaging", "jar"), 
+                                            classifier, // classifier, 
+                                            null // ArtifactHandler
+                                           );
         });
         
-        Assert.assertThat( success, Is.is(true));
-        }
-        
-        {
-        final java.io.File jar = new java.io.File("src/test/resources/flexlm.jar");
-        final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
-        
-        final boolean success = MojoUtils.getArtifactCoordinateFromJar(jarFile, (artifact) -> {           
-            Assert.fail("onsuccess closure must not be invoked!");
-        });
-        
-        Assert.assertThat( success, Is.is(false));
-        }
+        Assert.assertThat( result.isPresent(), is(true));
     }
 }
