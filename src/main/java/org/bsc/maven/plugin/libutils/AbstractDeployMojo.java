@@ -13,21 +13,19 @@ import org.apache.maven.plugins.annotations.Parameter;
  * @author sorrentino
  *
  */
-public abstract class AbstractDeployMojo extends AbstractMojo
+public abstract class AbstractDeployMojo extends AbstractMojo implements Constants
 {
 	
     /**
      * 
      */
     @Component(role = org.apache.maven.artifact.deployer.ArtifactDeployer.class)
-    //@MojoParameter(expression="${component.org.apache.maven.artifact.deployer.ArtifactDeployer}",required=true,readonly=true)
     private ArtifactDeployer deployer;
 
     /**
      * 
      */
     @Parameter(property = "localRepository", required=true,readonly=true)
-    //@MojoParameter(expression="${localRepository}",required=true,readonly=true)
     private ArtifactRepository localRepository;
     
     @Override

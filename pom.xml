@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bsc.maven.plugin</groupId>
   <artifactId>bulk-deploy</artifactId>
-  <version>1.0-beta3-SNAPSHOT</version>
+  <version>2.0-rc1</version>
   <packaging>maven-plugin</packaging>
   <name>Maven Bulk Deploy Plugin - ${project.version}</name>
   <description><![CDATA[
@@ -12,9 +12,11 @@
   ]]></description>
   <url>https://github.com/bsorrentino/maven-bulk-deploy</url>
   
+<!-- 
 <prerequisites>
-	<maven>2.2.1</maven>
+    <maven>3.5.0</maven>
 </prerequisites>
+-->  
   
 <scm>
 <developerConnection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</developerConnection>  
@@ -40,8 +42,8 @@
 
 <properties>
     
-    <mavenVersion>3.0.1</mavenVersion>
-    <pluginToolsVersion>3.1</pluginToolsVersion>
+    <mavenVersion>3.5.0</mavenVersion>
+    <pluginToolsVersion>3.5.2</pluginToolsVersion>
     <reports-plugin-version>2.4</reports-plugin-version>
     
 <!-- SONATYPE REPO -->
@@ -50,10 +52,9 @@
     <release.repo.id>sonatype-repo</release.repo.id>
     <release.repo.url>https://oss.sonatype.org/service/local/staging/deploy/maven2</release.repo.url>
 
-<!-- DOCUMENTATION 
-    <svn.release.site.url>svn:https://bsc-documentation-repo.googlecode.com/svn/trunk/maven-annotation-plugin/site</svn.release.site.url>
-    <svn.release.site.id>google-project</svn.release.site.id>
--->
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 
 </properties>
@@ -62,6 +63,7 @@
 
 <developers>
 	<developer>
+        <url>https://github.com/bsorrentino</url>
 		<email>bartolomeo.sorrentino@gmail.com</email>
 		<name>Bartolomeo Sorrentino</name>
 		<timezone>GMT+1</timezone>
@@ -71,10 +73,21 @@
 	</developer>
 </developers>
 
+<contributors>
+    <contributor>
+      <name>arnaldo82</name>
+      <url>https://github.com/arnaldo82</url>
+      <roles>
+        <role>developer</role>
+        <role>tester</role>
+      </roles>
+    </contributor>
+  </contributors>
+
  <licenses>
     <license>
       <name>MIT</name>
-      <url>http://opensource.org/licenses/MIT</url>
+      <url>https://opensource.org/licenses/MIT</url>
     </license>
   </licenses>
   
@@ -83,27 +96,25 @@
     <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-compat</artifactId>
-        <version>3.0.5</version>
+        <version>${mavenVersion}</version>
     </dependency>
       
   <dependency>
     <groupId>org.apache.maven</groupId>
     <artifactId>maven-plugin-api</artifactId>
-    <version>3.0.5</version>
+    <version>${mavenVersion}</version>
   </dependency>
   <dependency>
     <groupId>org.apache.maven</groupId>
     <artifactId>maven-core</artifactId>
-    <version>3.0.5</version>
+    <version>${mavenVersion}</version>
   </dependency>
-
- 
  
     <!-- dependencies to annotations -->
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>3.2</version>
+      <version>${pluginToolsVersion}</version>
     </dependency>
     <!-- generated help mojo has a dependency to plexus-utils -->
     <dependency>
@@ -119,35 +130,62 @@
     </dependency>
  
 </dependencies>
-  
+
+<reporting>
+<plugins>
+    <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-project-info-reports-plugin</artifactId>
+    <version>2.4</version>
+    <configuration>
+        <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+        <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+    </configuration>
+    <reportSets>
+
+        <reportSet>
+        <reports>
+            <report>summary</report>
+            <report>project-team</report>
+            <report>license</report>
+            <report>dependencies</report>
+            <report>scm</report>
+        </reports>
+        </reportSet>
+    </reportSets>
+    </plugin>
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.8</version>
+    </plugin>
+
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>${pluginToolsVersion}</version>
+    </plugin>
+
+</plugins>
+</reporting>
+
 <build>
            
    <plugins>
-        
-    <plugin>
-      <groupId>com.github.github</groupId>
-      <artifactId>site-maven-plugin</artifactId>
-      <version>0.8</version>
-      <configuration>
-        <message>Creating site for ${project.version}</message>
-        <server>github</server>
-        <repositoryName>maven-bulk-deploy</repositoryName>
-        <repositoryOwner>bsorrentino</repositoryOwner>
-      </configuration>
-      <executions>
-        <execution>
-          <goals>
-            <goal>site</goal>
-          </goals>
-          <phase>site</phase>
-        </execution>
-      </executions>
-    </plugin>      
-      
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.9.1</version>
+            <configuration>
+                <additionalparam>-Xdoclint:none</additionalparam>
+                <outputDirectory>${project.build.directory}/apidocs</outputDirectory>
+            </configuration>
+        </plugin>
+   
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-plugin-plugin</artifactId>
-            <version>3.1</version>
+            <version>${pluginToolsVersion}</version>
             <configuration>
                 <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
             </configuration>
@@ -167,94 +205,48 @@
                 </execution>
             </executions>
         </plugin>
-        
-        
-               <!--
-                =====================================================
-                MAVEN3 SITE GENERATION
-                =====================================================
-                -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-site-plugin</artifactId>
-                    <version>3.0</version>
 
-                    <dependencies>
-                        <dependency>
-                            <groupId>org.apache.maven.plugin-tools</groupId>
-                            <artifactId>maven-plugin-annotations</artifactId>
-                            <version>${pluginToolsVersion}</version>
-                            <scope>runtime</scope>
-                        </dependency>
+       <!--
+        =====================================================
+        MAVEN3 SITE GENERATION
+        =====================================================
+        -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <version>3.7.1</version>
 
-                        <dependency>
-                            <groupId>org.apache.maven.reporting</groupId>
-                            <artifactId>maven-reporting-exec</artifactId>
-                            <version>1.1</version>
-                        </dependency>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.maven.plugin-tools</groupId>
+                    <artifactId>maven-plugin-annotations</artifactId>
+                    <version>${pluginToolsVersion}</version>
+                    <scope>runtime</scope>
+                </dependency>
 
-                    </dependencies>
-                    <configuration>
-                        <reportPlugins>
+                <dependency>
+                    <groupId>org.apache.maven.reporting</groupId>
+                    <artifactId>maven-reporting-exec</artifactId>
+                    <version>1.4</version>
+                </dependency>
 
-                            <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-plugin-plugin</artifactId>
-                                <version>${pluginToolsVersion}</version>
-                            </plugin>
+            </dependencies>
 
-                            <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-project-info-reports-plugin</artifactId>
-                                <version>${reports-plugin-version}</version>
-                            </plugin>
-                        </reportPlugins>
-                    </configuration>
-                </plugin>     
+            <configuration>
+            </configuration>
+        </plugin>            
+    
+ 
         
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.3</version>
-            <configuration>
-                <source>1.8</source>
-                <target>1.8</target>
-            </configuration>
+            <version>3.8.1</version>
         </plugin>
-      <plugin>
-        <groupId>net.orfjackal.retrolambda</groupId>
-        <artifactId>retrolambda-maven-plugin</artifactId>
-        <version>2.0.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>process-main</goal>
-              <goal>process-test</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
 
     </plugins>
 						
 </build>
-
-<!--  
-<repositories>
-  <repository>
-    <id>jfrog</id>
-    <url>http://repo.jfrog.org/artifactory/plugins-releases/</url>
-  </repository>
-</repositories>    
-
-<pluginRepositories>
-    <pluginRepository>
-        <id>jfrog-plugins</id>
-        <name>jfrog-plugins-dist</name>
-        <url>http://repo.jfrog.org/artifactory/plugins-releases</url>
-    </pluginRepository>
-</pluginRepositories>
- -->
  
 <profiles>
     
@@ -262,16 +254,16 @@
         <id>release</id>
         <build>
             <plugins>
-                <!-- 
-                ===================================================================== 
-                mvn -Prelease release:perform -Darguments=-Dgpg.passphrase=thephrase 
-                ===================================================================== 
+                <!--
+                ====================================================================================
+                # https://github.com/keybase/keybase-issues/issues/2798
+                export GPG_TTY=$(tty)
+                mvn -Prelease source:jar javadoc:jar deploy -Dgpg.passphrase=thephrase
+                ====================================================================================
                 -->
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.3</version>
-
+                    <version>1.6</version>
                     <executions>
                         <execution>
                             <id>sign-artifacts</id>
@@ -281,9 +273,46 @@
                             </goals>
                         </execution>
                     </executions>
-
+                    <configuration>
+                        <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                        </gpgArguments>
+                    </configuration>
                 </plugin>
 
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>1.5.1</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <serverId>sonatype-server</serverId>
+                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                        <stagingProfileId />
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>com.github.github</groupId>
+                    <artifactId>site-maven-plugin</artifactId>
+                    <version>0.12</version>
+                    <configuration>
+                    <message>Creating site for ${project.version}</message>
+                    <server>github</server>
+                    <repositoryName>maven-bulk-deploy</repositoryName>
+                    <repositoryOwner>bsorrentino</repositoryOwner>
+                    </configuration>
+                    <executions>
+                    <execution>
+                        <goals>
+                        <goal>site</goal>
+                        </goals>
+                        <phase>site</phase>
+                    </execution>
+                    </executions>
+                </plugin>      
+          
 
             </plugins>
         </build>

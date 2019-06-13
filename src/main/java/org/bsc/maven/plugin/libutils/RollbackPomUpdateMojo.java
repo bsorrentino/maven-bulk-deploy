@@ -5,12 +5,13 @@
 package org.bsc.maven.plugin.libutils;
 
 import java.io.IOException;
+
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import static org.bsc.maven.plugin.libutils.Constants.POM_BACKUP_FILENAME;
 import org.codehaus.plexus.util.FileUtils;
 
 /**
@@ -20,10 +21,11 @@ import org.codehaus.plexus.util.FileUtils;
  */
 @Mojo(  name = "rollback", 
         requiresProject = true)
-public class RollbackPomUpdateMojo extends AbstractDeployMojo implements Constants {
-
-    @Component()
+public class RollbackPomUpdateMojo extends AbstractMojo implements Constants  {
+ 
+    @Parameter( defaultValue = "${project}", readonly = true )
     protected MavenProject project;
+
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
