@@ -43,7 +43,7 @@
 <properties>
     
     <mavenVersion>3.5.0</mavenVersion>
-    <pluginToolsVersion>3.5</pluginToolsVersion>
+    <pluginToolsVersion>3.5.2</pluginToolsVersion>
     <reports-plugin-version>2.4</reports-plugin-version>
     
 <!-- SONATYPE REPO -->
@@ -52,10 +52,6 @@
     <release.repo.id>sonatype-repo</release.repo.id>
     <release.repo.url>https://oss.sonatype.org/service/local/staging/deploy/maven2</release.repo.url>
 
-<!-- DOCUMENTATION 
-    <svn.release.site.url>svn:https://bsc-documentation-repo.googlecode.com/svn/trunk/maven-annotation-plugin/site</svn.release.site.url>
-    <svn.release.site.id>google-project</svn.release.site.id>
--->
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -67,6 +63,7 @@
 
 <developers>
 	<developer>
+        <url>https://github.com/bsorrentino</url>
 		<email>bartolomeo.sorrentino@gmail.com</email>
 		<name>Bartolomeo Sorrentino</name>
 		<timezone>GMT+1</timezone>
@@ -76,10 +73,21 @@
 	</developer>
 </developers>
 
+<contributors>
+    <contributor>
+      <name>arnaldo82</name>
+      <url>https://github.com/arnaldo82</url>
+      <roles>
+        <role>developer</role>
+        <role>tester</role>
+      </roles>
+    </contributor>
+  </contributors>
+
  <licenses>
     <license>
       <name>MIT</name>
-      <url>http://opensource.org/licenses/MIT</url>
+      <url>https://opensource.org/licenses/MIT</url>
     </license>
   </licenses>
   
@@ -122,7 +130,45 @@
     </dependency>
  
 </dependencies>
-  
+
+<reporting>
+<plugins>
+    <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-project-info-reports-plugin</artifactId>
+    <version>2.4</version>
+    <configuration>
+        <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+        <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+    </configuration>
+    <reportSets>
+
+        <reportSet>
+        <reports>
+            <report>summary</report>
+            <report>project-team</report>
+            <report>license</report>
+            <report>dependencies</report>
+            <report>scm</report>
+        </reports>
+        </reportSet>
+    </reportSets>
+    </plugin>
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.8</version>
+    </plugin>
+
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>${pluginToolsVersion}</version>
+    </plugin>
+
+</plugins>
+</reporting>
+
 <build>
            
    <plugins>
@@ -154,7 +200,7 @@
     <plugin>
       <groupId>com.github.github</groupId>
       <artifactId>site-maven-plugin</artifactId>
-      <version>0.8</version>
+      <version>0.12</version>
       <configuration>
         <message>Creating site for ${project.version}</message>
         <server>github</server>
@@ -166,7 +212,7 @@
           <goals>
             <goal>site</goal>
           </goals>
-          <phase>site</phase>
+          <!--phase>site</phase-->
         </execution>
       </executions>
     </plugin>      
@@ -181,7 +227,7 @@
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-site-plugin</artifactId>
-            <version>3.0</version>
+            <version>3.7.1</version>
 
             <dependencies>
                 <dependency>
@@ -194,11 +240,13 @@
                 <dependency>
                     <groupId>org.apache.maven.reporting</groupId>
                     <artifactId>maven-reporting-exec</artifactId>
-                    <version>1.1</version>
+                    <version>1.4</version>
                 </dependency>
 
             </dependencies>
+
             <configuration>
+                <!--
                 <reportPlugins>
 
                     <plugin>
@@ -213,8 +261,11 @@
                         <version>${reports-plugin-version}</version>
                     </plugin>
                 </reportPlugins>
+                -->
             </configuration>
-        </plugin>     
+        </plugin>            
+    
+ 
         
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>

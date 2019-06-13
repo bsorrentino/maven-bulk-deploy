@@ -1,5 +1,12 @@
 package org.bsc.maven.plugin.libutils;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
@@ -23,13 +30,6 @@ import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
@@ -177,12 +177,15 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     /**
      * For not maven standard artifacts a new not mandatory parameter like useSameGroupIdAsArtifactId could be useful to avoid the awkwardness of regex groups matching
      * artifactId and GroupId.
-     * 
+     * <br/>
      * A thumb rule could be:
-     *  - take all filename content after the last - and before file extension and manage it as a fallback to version parameter.
-     *  - all content before the last - or before .jar identify both artifactId and GroupId.
+     * <ul>
+     *  <li> take all filename content after the last - and before file extension and manage it as a fallback to version parameter.
+     *  <li> all content before the last - or before .jar identify both artifactId and GroupId.
+     * </ul>
      * Example:
-     *
+     * <br/>
+     * <pre>
      * guava-19.0.jar
      *
      * If version not set and useSameGroupIdAsArtifactId = true
@@ -196,6 +199,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      *    groupId:      guava-19.0
      *    artifactId:   guava-19.0
      *    version:      xxx
+     * </pre>
      */
     @Parameter(property = "useSameGroupIdAsArtifactId", defaultValue = "false")
     private boolean useSameGroupIdAsArtifactId;
