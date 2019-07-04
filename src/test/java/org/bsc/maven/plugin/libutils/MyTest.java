@@ -78,8 +78,55 @@ public class MyTest {
                                             classifier, // classifier, 
                                             null // ArtifactHandler
                                            );
-        });
+        }, null);
         
         Assert.assertThat( result.isPresent(), is(true));
     }
+
+
+    @Test
+    public void shouldBuildArtifactChoosingCorrectPomPropertiesFromFatJarWhenGroupIdIsSet() throws Exception {
+
+        final java.io.File jar = new java.io.File("src/test/resources/fat-jar-with-dependencies.jar");
+        final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
+        final Optional<Artifact> result = getArtifactCoordinateFromPropsInJar(jarFile, (props) ->  {
+            final String scope = "";
+            final String classifier = "";
+
+            return new DefaultArtifact(props.getProperty("groupId"),
+                    props.getProperty("artifactId"),
+                    props.getProperty("version"),
+                    scope, // scope
+                    props.getProperty("packaging", "jar"),
+                    classifier, // classifier,
+                    null // ArtifactHandler
+            );
+        }, "com.bulk-deploy");
+
+        Assert.assertThat( result.isPresent(), is(true));
+        Assert.assertThat(result.get().getGroupId(), is("com.bulk-deploy"));
+    }
+
+
+    @Test
+    public void shouldGetEmptyOptionalWhenGroupIdIsNotSetAndTheJarIsFat() throws Exception {
+
+        final java.io.File jar = new java.io.File("src/test/resources/fat-jar-with-dependencies.jar");
+        final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
+        final Optional<Artifact> result = getArtifactCoordinateFromPropsInJar(jarFile, (props) ->  {
+            final String scope = "";
+            final String classifier = "";
+
+            return new DefaultArtifact(props.getProperty("groupId"),
+                    props.getProperty("artifactId"),
+                    props.getProperty("version"),
+                    scope, // scope
+                    props.getProperty("packaging", "jar"),
+                    classifier, // classifier,
+                    null // ArtifactHandler
+            );
+        }, null);
+        Assert.assertThat( result.isPresent(), is(false));
+    }
+
 }

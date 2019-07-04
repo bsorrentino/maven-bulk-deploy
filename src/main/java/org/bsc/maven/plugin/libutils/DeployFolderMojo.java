@@ -440,14 +440,13 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( file );
 
             final Optional<Artifact> artifact = 
-                    getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact );
+                    getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact, groupId);
             
             if( artifact.isPresent() ) {
                 result = artifact.get();
                 getLog().info( format("artifact [%s] is already a maven artifact!", result));
                 isMavenArtifact = true;
             }
-         
         }
                
         if( !isMavenArtifact ) {

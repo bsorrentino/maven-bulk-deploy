@@ -23,7 +23,7 @@ h1. Usage
 	
 	<configuration>
 	
-		<groupId>mygroupId</groupId>
+		<groupId>mygroupId</groupId> <!-- the groupId must be always specified in case of fat jar to allow the plugin to localize the correct pom.properties (multiple pom.properties) -->
 		<version>myrelease</version>
 		<sourceFolder>/folder_where_are_libraries</sourceFolder>
 		<includes><!-- INCLUDE FILTERS -->
