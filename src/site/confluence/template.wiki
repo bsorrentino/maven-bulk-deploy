@@ -23,7 +23,12 @@ h1. Usage
 	
 	<configuration>
 	
-		<groupId>mygroupId</groupId> <!-- the groupId must be always specified in case of fat jar to allow the plugin to localize the correct pom.properties (multiple pom.properties) -->
+		<groupId>mygroupId</groupId> <!-- the groupId must be always specified in case of fat jar to allow the plugin to localize the correct pom.properties (multiple pom.properties) --> 
+    <!-- when version is not specified the following derivation rules apply:
+             1. If ignorePomProperties=false and pom.properties is ok it will be used to figure out it.
+             2. else if filPattern is specified it will computed as the second matching group of the regex provided.
+             3. else it will be the last part of the name before the packaging and after the last '-'. I.e. guava-19.jar => version = 19
+        -->
 		<version>myrelease</version>
 		<sourceFolder>/folder_where_are_libraries</sourceFolder>
 		<includes><!-- INCLUDE FILTERS -->
@@ -38,7 +43,14 @@ h1. Usage
 		<!-- REPOSITORY'S COORDINATE WHERE DEPLOY --> 
 		<repositoryId>$\{release.repo.id\}</repositoryId>
 		<url>$\{repo.url\}/third-party</url>
-	    
+
+		<!-- when true pom.properties is not read inside the jar to retrieve maven artifact coordinates.
+		     Instead they are deduced from configuration parameters like groupId, version, filePattern and useSameGroupIdAsArtifactId -->
+        <ignorePomProperties>true|false</ignorePomProperties>
+
+		<!-- when true and groupId parameter is not specified the group of the artifact will be derived from the name of the file -->
+        <useSameGroupIdAsArtifactId>true|false</useSameGroupIdAsArtifactId>
+
 	</configuration>
 	
 </plugin>

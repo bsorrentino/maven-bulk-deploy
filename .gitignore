@@ -4,4 +4,6 @@
 .settings/
 target
 
-/pom.xml.versionsBackup
+.vscode/
+.factorypath
+settings.json

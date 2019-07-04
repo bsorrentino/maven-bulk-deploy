@@ -62,7 +62,7 @@ public class MyTest {
     
     @Test
     public void getArtifactCoordinateFromJar() throws Exception {
-        
+    
         final java.io.File jar = new java.io.File("src/test/resources/log4j.jar");
         final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
         
