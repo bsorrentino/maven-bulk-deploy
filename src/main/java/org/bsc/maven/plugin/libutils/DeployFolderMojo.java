@@ -1,5 +1,12 @@
 package org.bsc.maven.plugin.libutils;
 
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
+import static org.codehaus.plexus.util.FileUtils.copyFile;
+import static org.codehaus.plexus.util.FileUtils.getFiles;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
@@ -7,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
@@ -29,14 +37,6 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
-
-
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
-import static org.codehaus.plexus.util.FileUtils.copyFile;
-import static org.codehaus.plexus.util.FileUtils.getFiles;
 
 /**
  * Installs artifacts from folder to remote repository.
@@ -80,6 +80,9 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     /**
      * ArtifactId prefix of the artifacts to be deployed. Retrieved from POM
      * file if specified.
+     * 
+     * It must be always specified in case of fat jar to allow the plugin to localize 
+     * the correct pom.properties (multiple pom.properties)
      *
      */
     @Parameter(property = "artifactId-prefix")
@@ -469,7 +472,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( file );
 
             final Optional<Artifact> artifact = 
-                    getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact, groupId);
+                    getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact, Optional.ofNullable(groupId) );
             
             if( artifact.isPresent() ) {
                 result = artifact.get();

@@ -6,6 +6,7 @@ package org.bsc.maven.plugin.libutils;
 
 import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -15,7 +16,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.hamcrest.core.Is;
 import org.hamcrest.core.IsEqual;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -32,31 +32,31 @@ public class MyTest {
         
         Matcher m = p.matcher("11.1.1");
         
-        Assert.assertThat( m.matches(), Is.is(true));
+        assertThat( m.matches(), Is.is(true));
         }
         
         {
         Pattern p = Pattern.compile("([\\w\\.]+)_");        
         Matcher m = p.matcher("oracle.classloader_");
         
-        Assert.assertThat( m.matches(), Is.is(true));
-        Assert.assertThat( m.group(1), IsEqual.equalTo("oracle.classloader"));
+        assertThat( m.matches(), Is.is(true));
+        assertThat( m.group(1), IsEqual.equalTo("oracle.classloader"));
         }
 
         {
         Pattern p = Pattern.compile("(?:\\.jar)");        
         Matcher m = p.matcher(".jar");
         
-        Assert.assertThat( m.matches(), Is.is(true));
-        Assert.assertThat( m.groupCount(), IsEqual.equalTo(0));
+        assertThat( m.matches(), Is.is(true));
+        assertThat( m.groupCount(), IsEqual.equalTo(0));
         }
 
         {
         Pattern p = Pattern.compile("([\\w\\.]+)_([\\d\\.]+)(?:\\.jar)");        
         Matcher m = p.matcher("oracle.classloader_11.1.1.jar");
         
-        Assert.assertThat( m.matches(), Is.is(true));
-        Assert.assertThat( m.groupCount(), IsEqual.equalTo(2));
+        assertThat( m.matches(), Is.is(true));
+        assertThat( m.groupCount(), IsEqual.equalTo(2));
         }
     }
     
@@ -78,9 +78,9 @@ public class MyTest {
                                             classifier, // classifier, 
                                             null // ArtifactHandler
                                            );
-        }, null);
+        }, Optional.empty() );
         
-        Assert.assertThat( result.isPresent(), is(true));
+        assertThat( result.isPresent(), is(true));
     }
 
 
@@ -89,6 +89,8 @@ public class MyTest {
 
         final java.io.File jar = new java.io.File("src/test/resources/fat-jar-with-dependencies.jar");
         final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( jar );
+        final Optional<String> groupid = Optional.of("com.bulk-deploy");
+        
         final Optional<Artifact> result = getArtifactCoordinateFromPropsInJar(jarFile, (props) ->  {
             final String scope = "";
             final String classifier = "";
@@ -101,10 +103,10 @@ public class MyTest {
                     classifier, // classifier,
                     null // ArtifactHandler
             );
-        }, "com.bulk-deploy");
+        }, groupid);
 
-        Assert.assertThat( result.isPresent(), is(true));
-        Assert.assertThat(result.get().getGroupId(), is("com.bulk-deploy"));
+        assertThat( result.isPresent(), is(true));
+        assertThat(result.get().getGroupId(), is("com.bulk-deploy"));
     }
 
 
@@ -125,8 +127,8 @@ public class MyTest {
                     classifier, // classifier,
                     null // ArtifactHandler
             );
-        }, null);
-        Assert.assertThat( result.isPresent(), is(false));
+        }, Optional.empty());
+        assertThat( result.isPresent(), is(false));
     }
 
 }
