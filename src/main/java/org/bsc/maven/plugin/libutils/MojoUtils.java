@@ -28,11 +28,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -80,60 +82,48 @@ public class MojoUtils {
         }
     }
 
-        /**
-     * 
+    /**
+     *
      * @param <T>
      * @param jarFile
      * @param creator
      * @return Artifact
-     * @throws java.io.IOException 
-     * @throws org.apache.maven.plugin.MojoExecutionException 
+     * @throws java.io.IOException
+     * @throws org.apache.maven.plugin.MojoExecutionException
      */
-    public static <T> Optional<T> getArtifactCoordinateFromPropsInJar( JarFile jarFile, 
-                                                        Function<java.util.Properties,T> creator ) throws IOException, MojoExecutionException 
+    public static <T> Optional<T> getArtifactCoordinateFromPropsInJar( JarFile jarFile,
+                                                                       Function<java.util.Properties,T> creator, 
+                                                                       Optional<String> groupId) throws IOException, MojoExecutionException
     {
-        
         if( jarFile==null ) throw new IllegalArgumentException("jar parameter is null!");
         if( creator==null ) throw new IllegalArgumentException("onSuccess parameter is null!");
-        
-        final Enumeration<JarEntry> jarEntries = jarFile.entries();
+        if (groupId == null) throw new java.lang.IllegalArgumentException("groupId is null!");
 
-        if( jarEntries!=null ) {
-            while ( jarEntries.hasMoreElements() )
+
+        
+        final List<JarEntry> pomPropertyEntries = jarFile.stream()
+                                                    .filter(_entry -> POM_PROPERTIES.matcher(_entry.getName()).matches())
+                                                    .collect(Collectors.toList());
+        
+        final Optional<JarEntry> entry = (pomPropertyEntries.size() == 1) ?
+                                        Optional.of(pomPropertyEntries.get(0)) :
+                                        pomPropertyEntries.stream()
+                                            .filter(_entry -> groupId.isPresent() ? _entry.getName().contains(groupId.get()) : false)
+                                            .findAny();
+                                        
+        return entry.map( ThrowingFunction.unchecked(_entry -> {
+            try( InputStream pomInputStream = jarFile.getInputStream( _entry ) )
             {
-                final JarEntry entry = jarEntries.nextElement();
-
-                if ( POM_PROPERTIES.matcher( entry.getName() ).matches() )
-                {
-
-                    try( InputStream pomInputStream = jarFile.getInputStream( entry ) )
-                    {
-                        final java.util.Properties props = new java.util.Properties();
-                        
-                        props.load(pomInputStream);
-                        
-                        /*
-                        final String scope = "";
-                        final String classifier = "";
-                        
-                        final DefaultArtifact artifact = 
-                                new DefaultArtifact(props.getProperty("groupId"), 
-                                                    props.getProperty("artifactId"),
-                                                    props.getProperty("version"), 
-                                                    scope, // scope
-                                                    props.getProperty("packaging", "jar"), 
-                                                    classifier, // classifier, 
-                                                    null // ArtifactHandler
-                                                   );
-                        */
-                        return Optional.ofNullable(creator.apply( props ));
-                    }
-                }
+                final java.util.Properties props = new java.util.Properties();
+                props.load(pomInputStream);
+                return Optional.ofNullable(creator.apply( props ));
             }
-        }
-        
-        return Optional.empty();
+        })).orElse(Optional.empty());
+
     }
+
+
+
 
     /**
      * 
