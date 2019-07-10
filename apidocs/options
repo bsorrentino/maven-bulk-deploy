@@ -15,10 +15,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Maven Bulk Deploy Plugin - 2.0-rc1 2.0-rc1 API'
+'Maven Bulk Deploy Plugin - 2.0-rc2 2.0-rc2 API'
 -linkoffline
 'http://download.oracle.com/javase/6/docs/api' '/Users/softphone/WORKSPACES/GITHUB/MAVEN/maven-bulk-deploy/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'Maven Bulk Deploy Plugin - 2.0-rc1 2.0-rc1 API'
+'Maven Bulk Deploy Plugin - 2.0-rc2 2.0-rc2 API'
