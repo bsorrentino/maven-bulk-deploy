@@ -73,6 +73,9 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     /**
      * GroupId of the artifact to be deployed. Retrieved from POM file if
      * specified.
+     * <br/>
+     * It must be always specified in case of fat jar to allow the plugin to localize 
+     * the correct pom.properties (multiple pom.properties)
      *
      */
     @Parameter(property = "groupId")
@@ -81,8 +84,6 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      * ArtifactId prefix of the artifacts to be deployed. Retrieved from POM
      * file if specified.
      * 
-     * It must be always specified in case of fat jar to allow the plugin to localize 
-     * the correct pom.properties (multiple pom.properties)
      *
      */
     @Parameter(property = "artifactId-prefix")
