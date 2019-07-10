@@ -189,9 +189,7 @@ POM file if specified.<br /><b>User property is</b>: <tt>artifactId-postfix</tt>
 <td><tt>-</tt></td>
             
 <td>ArtifactId prefix of the artifacts to be deployed. Retrieved from
-POM file if specified. It must be always specified in case of fat
-jar to allow the plugin to localize the correct pom.properties
-(multiple pom.properties)<br /><b>User property is</b>: <tt>artifactId-prefix</tt>.<br /></td>
+POM file if specified.<br /><b>User property is</b>: <tt>artifactId-prefix</tt>.<br /></td>
           </tr>
           
 <tr class="a">
@@ -250,7 +248,9 @@ is supplied with the pomFile argument.<br /><b>Default value is</b>: <tt>true</t
 <td><tt>-</tt></td>
             
 <td>GroupId of the artifact to be deployed. Retrieved from POM file if
-specified.<br /><b>User property is</b>: <tt>groupId</tt>.<br /></td>
+specified. <br />
+It must be always specified in case of fat jar to allow the plugin
+to localize the correct pom.properties (multiple pom.properties)<br /><b>User property is</b>: <tt>groupId</tt>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -401,9 +401,7 @@ POM file if specified.</div>
 <h4><a name="a.3CartifactIdPrefix.3E"></a><b><a name="artifactIdPrefix">&lt;artifactIdPrefix&gt;</a></b></h4>
         
 <div>ArtifactId prefix of the artifacts to be deployed. Retrieved from
-POM file if specified. It must be always specified in case of fat
-jar to allow the plugin to localize the correct pom.properties
-(multiple pom.properties)</div>
+POM file if specified.</div>
         
 <ul>
           
@@ -472,7 +470,9 @@ is supplied with the pomFile argument.</div>
 <h4><a name="a.3CgroupId.3E"></a><b><a name="groupId">&lt;groupId&gt;</a></b></h4>
         
 <div>GroupId of the artifact to be deployed. Retrieved from POM file if
-specified.</div>
+specified. <br />
+It must be always specified in case of fat jar to allow the plugin
+to localize the correct pom.properties (multiple pom.properties)</div>
         
 <ul>
           
