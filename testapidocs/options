@@ -7,7 +7,7 @@
 '/Users/softphone/WORKSPACES/GITHUB/MAVEN/maven-bulk-deploy/src/test/java'
 -author
 -bottom
-'Copyright &#169; 2009-2019. All Rights Reserved.'
+'Copyright &#169; 2009-2020. All Rights Reserved.'
 -charset
 'UTF-8'
 -d
@@ -15,12 +15,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Maven Bulk Deploy Plugin - 2.0-rc2 2.0-rc2 Test API'
--link
-'../apidocs'
+'Maven Bulk Deploy Plugin - 2.0 2.0 Test API'
 -linkoffline
 'http://download.oracle.com/javase/6/docs/api' '/Users/softphone/WORKSPACES/GITHUB/MAVEN/maven-bulk-deploy/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'Maven Bulk Deploy Plugin - 2.0-rc2 2.0-rc2 Test API'
+'Maven Bulk Deploy Plugin - 2.0 2.0 Test API'
