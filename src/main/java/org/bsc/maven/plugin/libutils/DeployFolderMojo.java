@@ -29,6 +29,7 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.DefaultModelWriter;
 import org.apache.maven.model.io.ModelWriter;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -338,9 +339,9 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
                 Artifact a;
 
                 if (deployedFiles.containsKey(f.getName())) {
-                    a = execute(f, null);
+                    a = execute(f, Optional.empty());
                 } else {
-                    a = execute(f, deploymentRepository);
+                    a = execute(f, Optional.of(deploymentRepository));
                     
                     if( !preview ) {
                         
@@ -443,14 +444,14 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
         return createBuildArtifact(groupId, artifactId, version, packaging);
     }
-    
+
     /**
      *
      * @param file
-     * @param deploymentRepository
+     * @param deploymentRepository optional
      * @throws Exception
      */
-    private Artifact execute(File file, ArtifactRepository deploymentRepository) throws Exception {
+    private Artifact execute(File file, Optional<ArtifactRepository> deploymentRepository) throws Exception {
 
         getLog().info( format("process file %s", file.getName()) );
 
@@ -466,47 +467,58 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         final String packaging        = name.substring(++index);
 
         Artifact result = null;
-        boolean isMavenArtifact =  false;
-        
-        if( !ignorePomProperties && "jar".compareToIgnoreCase(packaging)==0 ) {
-            
-            final java.util.jar.JarFile jarFile = new java.util.jar.JarFile( file );
 
-            final Optional<Artifact> artifact = 
-                    getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact, Optional.ofNullable(groupId) );
-            
-            if( artifact.isPresent() ) {
-                result = artifact.get();
-                getLog().info( format("artifact [%s] is already a maven artifact!", result));
-                isMavenArtifact = true;
+        // // PROCESSING POM
+        if( "pom".compareToIgnoreCase(packaging)==0 ) {
+            final MavenXpp3Reader reader = new MavenXpp3Reader();
+
+            final Model model = reader.read(new java.io.FileReader(file));
+
+            result = createBuildArtifact(
+                    model.getGroupId(),
+                    model.getArtifactId(),
+                    model.getVersion(),
+                    model.getPackaging() );
+        }
+        else { // PROCESSING JAR
+
+            boolean isMavenArtifact =  false;
+
+            // PROCESSING JAR
+            if (!ignorePomProperties && "jar".compareToIgnoreCase(packaging) == 0) {
+
+                final java.util.jar.JarFile jarFile = new java.util.jar.JarFile(file);
+
+                final Optional<Artifact> artifact =
+                        getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact, Optional.ofNullable(groupId));
+
+                if (artifact.isPresent()) {
+                    result = artifact.get();
+                    getLog().info(format("artifact [%s] is already a maven artifact!", result));
+                    isMavenArtifact = true;
+                }
+            }
+
+            if (!isMavenArtifact) {
+                result = createNotStandardArtifact(candidateArtifactId, packaging);
+            }
+
+            if (preview || !deploymentRepository.isPresent()) {
+                return result;
+            }
+
+
+            // Upload the POM if requested, generating one if need be
+            if (!isMavenArtifact && generatePom) {
+                ProjectArtifactMetadata metadata =
+                        new ProjectArtifactMetadata(result,
+                                generatePomFile(result.getArtifactId(), packaging, result.getVersion()));
+                result.addMetadata(metadata);
             }
         }
-               
-        if( !isMavenArtifact ) {
-            result = createNotStandardArtifact(candidateArtifactId, packaging);
-        }
-        
-        if (preview || deploymentRepository == null) {
-            return result;
-        }
 
-
-        // Upload the POM if requested, generating one if need be
-        if (!isMavenArtifact && generatePom) {
-            ProjectArtifactMetadata metadata = 
-                    new ProjectArtifactMetadata(result, 
-                                                generatePomFile(result.getArtifactId(), packaging, result.getVersion()));
-            result.addMetadata(metadata);
-        }
-        /*
-        final File pomFile = null;
-        else {
-            ProjectArtifactMetadata metadata = new ProjectArtifactMetadata(result, pomFile);
-            result.addMetadata(metadata);
-        }
-        */
         try {
-            getDeployer().deploy(file, result, deploymentRepository, getLocalRepository());
+            getDeployer().deploy(file, result, deploymentRepository.get(), getLocalRepository());
         } catch (ArtifactDeploymentException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
