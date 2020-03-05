@@ -1,20 +1,5 @@
 package org.bsc.maven.plugin.libutils;
 
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromPropsInJar;
-import static org.codehaus.plexus.util.FileUtils.copyFile;
-import static org.codehaus.plexus.util.FileUtils.getFiles;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
@@ -26,10 +11,9 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.DefaultModelWriter;
 import org.apache.maven.model.io.ModelWriter;
-import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -507,33 +491,17 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
         Artifact result = null;
 
-            final Optional<Artifact> artifact =
-                    getArtifactCoordinateFromPropsInJar(jarFile, this::createBuildArtifact );
-
-            if( artifact.isPresent() ) {
-                result = artifact.get();
-                getLog().info( format("artifact [%s] is already a maven artifact!", result));
-                isMavenArtifact = true;
-            }
-
-        }
-
-        if( !isMavenArtifact ) {
-            result = createNotStandardArtifact(candidateArtifactId, packaging);
-        }
-
-        if (isPreviewMode() || !deploymentRepository.isPresent()) {
-            return result;
-        }
+        // // PROCESSING POM
+        if( "pom".compareToIgnoreCase(packaging)==0 ) {
+            final MavenXpp3Reader reader = new MavenXpp3Reader();
 
             final Model model = reader.read(new java.io.FileReader(file));
 
-        // Upload the POM if requested, generating one if need be
-        if (!isMavenArtifact && generatePom) {
-            ProjectArtifactMetadata metadata =
-                    new ProjectArtifactMetadata(result,
-                                                generatePomFile(result.getArtifactId(), packaging, result.getVersion()));
-            result.addMetadata(metadata);
+            result = createBuildArtifact(
+                    model.getGroupId(),
+                    model.getArtifactId(),
+                    model.getVersion(),
+                    model.getPackaging() );
         }
         else { // PROCESSING JAR
 
@@ -558,10 +526,9 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
                 result = createNotStandardArtifact(candidateArtifactId, packaging);
             }
 
-            if (preview || !deploymentRepository.isPresent()) {
+            if (isPreviewMode() || !deploymentRepository.isPresent()) {
                 return result;
             }
-
 
             // Upload the POM if requested, generating one if need be
             if (!isMavenArtifact && generatePom) {
