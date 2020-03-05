@@ -1,55 +1,51 @@
 package org.bsc.maven.plugin.libutils;
 
-import org.apache.maven.artifact.deployer.ArtifactDeployer;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
+import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import java.util.Optional;
+
 /**
- * 
- * @author sorrentino
- *
+ * Abstract class for Deploy mojo's.
  */
-public abstract class AbstractDeployMojo extends AbstractMojo implements Constants
+public abstract class AbstractDeployMojo
+        extends AbstractMojo
 {
-	
-    /**
-     * 
-     */
-    @Component(role = org.apache.maven.artifact.deployer.ArtifactDeployer.class)
-    private ArtifactDeployer deployer;
 
     /**
-     * 
+     * Flag whether Maven is currently in online/offline mode.
+     *
+     * @since 2.1
      */
-    @Parameter(property = "localRepository", required=true,readonly=true)
-    private ArtifactRepository localRepository;
-    
-    @Override
-    public abstract void execute() throws MojoExecutionException, MojoFailureException;
-    
+    @Parameter( defaultValue = "${settings.offline}", readonly = true )
+    private boolean offline;
+    /**
+     * maven session
+     */
+    @Parameter( defaultValue = "${session}", readonly = true, required = true )
+    private MavenSession session;
+
     /* Setters and Getters */
 
-    public ArtifactDeployer getDeployer()
+    protected boolean isOffline()
     {
-        return deployer;
+        return offline;
     }
 
-    public void setDeployer(ArtifactDeployer deployer)
+    protected ArtifactRepository createDeploymentArtifactRepository( String id, String url )
     {
-        this.deployer = deployer;
+        return new MavenArtifactRepository( id, url, new DefaultRepositoryLayout(), new ArtifactRepositoryPolicy(),
+                new ArtifactRepositoryPolicy() );
     }
 
-    public ArtifactRepository getLocalRepository()
+    protected final Optional<MavenSession> getSession()
     {
-        return localRepository;
-    }
-
-    public void setLocalRepository(ArtifactRepository localRepository)
-    {
-        this.localRepository = localRepository;
+        return Optional.ofNullable(session);
     }
 }

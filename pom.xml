@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bsc.maven.plugin</groupId>
   <artifactId>bulk-deploy</artifactId>
-  <version>2.0-rc1</version>
+  <version>2.1-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
   <name>Maven Bulk Deploy Plugin - ${project.version}</name>
   <description><![CDATA[
@@ -34,16 +34,12 @@
   		<url>${snapshot.repo.url}</url>
                 <uniqueVersion>false</uniqueVersion>
   	</snapshotRepository>
-      <site>
-        <id>${release.site.id}</id>
-        <url>${release.site.url}</url>
-      </site>
   </distributionManagement>
 
 <properties>
     
-    <mavenVersion>3.5.0</mavenVersion>
-    <pluginToolsVersion>3.5.2</pluginToolsVersion>
+    <maven.version>3.5.4</maven.version>
+    <pluginTools.version>3.6.0</pluginTools.version>
     <reports-plugin-version>2.4</reports-plugin-version>
     
 <!-- SONATYPE REPO -->
@@ -92,29 +88,40 @@
   </licenses>
   
 <dependencies>
-    <!-- Maven classes maintained as compatibility layer for tools done with Maven 2. -->
+    <!-- Maven classes maintained as compatibility layer for tools done with Maven 2.
     <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-compat</artifactId>
-        <version>${mavenVersion}</version>
+        <version>${maven.version}</version>
     </dependency>
+    -->
       
   <dependency>
     <groupId>org.apache.maven</groupId>
     <artifactId>maven-plugin-api</artifactId>
-    <version>${mavenVersion}</version>
+    <version>${maven.version}</version>
   </dependency>
   <dependency>
     <groupId>org.apache.maven</groupId>
     <artifactId>maven-core</artifactId>
-    <version>${mavenVersion}</version>
+    <version>${maven.version}</version>
   </dependency>
- 
+    <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-artifact</artifactId>
+        <version>${maven.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.maven.shared</groupId>
+        <artifactId>maven-artifact-transfer</artifactId>
+        <version>0.11.0</version>
+    </dependency>
+
     <!-- dependencies to annotations -->
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>${pluginToolsVersion}</version>
+      <version>${pluginTools.version}</version>
     </dependency>
     <!-- generated help mojo has a dependency to plexus-utils -->
     <dependency>
@@ -163,7 +170,7 @@
     <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
-        <version>${pluginToolsVersion}</version>
+        <version>${pluginTools.version}</version>
     </plugin>
 
 </plugins>
@@ -185,7 +192,7 @@
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-plugin-plugin</artifactId>
-            <version>${pluginToolsVersion}</version>
+            <version>${pluginTools.version}</version>
             <configuration>
                 <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
             </configuration>
@@ -220,7 +227,7 @@
                 <dependency>
                     <groupId>org.apache.maven.plugin-tools</groupId>
                     <artifactId>maven-plugin-annotations</artifactId>
-                    <version>${pluginToolsVersion}</version>
+                    <version>${pluginTools.version}</version>
                     <scope>runtime</scope>
                 </dependency>
 

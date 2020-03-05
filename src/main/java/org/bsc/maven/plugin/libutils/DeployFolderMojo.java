@@ -1,19 +1,10 @@
 package org.bsc.maven.plugin.libutils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.model.Dependency;
@@ -22,14 +13,27 @@ import org.apache.maven.model.io.DefaultModelWriter;
 import org.apache.maven.model.io.ModelWriter;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
+import org.apache.maven.shared.transfer.artifact.deploy.ArtifactDeployer;
+import org.apache.maven.shared.transfer.artifact.deploy.ArtifactDeployerException;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
@@ -45,6 +49,9 @@ import static org.codehaus.plexus.util.FileUtils.getFiles;
 @Mojo(name = "deploy-folder")
 public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
+    @Component
+    private ArtifactDeployer artifactDeployer;
+
     @Parameter( defaultValue = "${project}", readonly = true )
     protected MavenProject project;
 
@@ -53,7 +60,6 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      */
     @Parameter(defaultValue = "false", property = "deploy.updatePom" )
     private boolean _updatePom;
-
     /**
      * preview mode
      */
@@ -151,12 +157,6 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     @Parameter(property = "url", required = true)
     private String url;
     /**
-     * Component used to create a repository
-     *
-     */
-    @Component
-    private ArtifactRepositoryFactory repositoryFactory; 
-    /**
      * 
      */
     @Component
@@ -204,12 +204,34 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     @Parameter(property = "useSameGroupIdAsArtifactId", defaultValue = "false")
     private boolean useSameGroupIdAsArtifactId;
 
-    /**
+     /**
      * issue #2 : skip check pom.properties inside jar
      */
     @Parameter(property = "ignorePomProperties", defaultValue = "false")
     private boolean ignorePomProperties;
-    
+
+    /**
+     * Ignore errors on deployments
+     * @since 2.1
+     */
+    @Parameter(property = "deploy.failOnError", defaultValue = "true")
+    private boolean failOnError;
+
+    /**
+     *
+     * @return
+     */
+    private Optional<ArtifactDeployer> getDeployer() {
+        return Optional.ofNullable(artifactDeployer);
+    }
+
+    private boolean isPreviewMode() {
+        return preview;
+    }
+
+    /**
+     *
+     */
     private void updatePom() {
 
         if (!_updatePom) {
@@ -297,10 +319,12 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             throw new MojoExecutionException(sourceFolder.getPath() + " is not folder.");
         }
 
-        final ArtifactRepositoryLayout layout = repositoryLayouts.get(repositoryLayout);
+        if ( isOffline() && !isPreviewMode() )
+        {
+            throw new MojoExecutionException( "Cannot deploy artifacts when Maven is in offline mode" );
+        }
 
-        final ArtifactRepository deploymentRepository =
-                repositoryFactory.createDeploymentArtifactRepository(repositoryId, url, layout, uniqueVersion);
+        final ArtifactRepository deploymentRepository = createDeploymentArtifactRepository(repositoryId, url);
 
         final String protocol = deploymentRepository.getProtocol();
 
@@ -334,11 +358,11 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
                 Artifact a;
 
                 if (deployedFiles.containsKey(f.getName())) {
-                    a = execute(f, null);
+                    a = execute(f, Optional.empty());
                 } else {
-                    a = execute(f, deploymentRepository);
+                    a = execute(f, Optional.ofNullable(deploymentRepository));
                     
-                    if( !preview ) {
+                    if( !isPreviewMode() ) {
                         
                         deployedFiles.setProperty(f.getName(), f.getAbsolutePath());
 
@@ -446,7 +470,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      * @param deploymentRepository
      * @throws Exception
      */
-    private Artifact execute(File file, ArtifactRepository deploymentRepository) throws Exception {
+    private Artifact execute(File file, Optional<ArtifactRepository> deploymentRepository) throws Exception {
 
         getLog().info( format("process file %s", file.getName()) );
 
@@ -483,7 +507,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             result = createNotStandardArtifact(candidateArtifactId, packaging);
         }
         
-        if (preview || deploymentRepository == null) {
+        if (isPreviewMode() || !deploymentRepository.isPresent()) {
             return result;
         }
 
@@ -491,7 +515,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         // Upload the POM if requested, generating one if need be
         if (!isMavenArtifact && generatePom) {
             ProjectArtifactMetadata metadata = 
-                    new ProjectArtifactMetadata(result, 
+                    new ProjectArtifactMetadata(result,
                                                 generatePomFile(result.getArtifactId(), packaging, result.getVersion()));
             result.addMetadata(metadata);
         }
@@ -503,9 +527,32 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         }
         */
         try {
-            getDeployer().deploy(file, result, deploymentRepository, getLocalRepository());
-        } catch (ArtifactDeploymentException e) {
-            throw new MojoExecutionException(e.getMessage(), e);
+
+            final ProjectBuildingRequest projectBuildingRequest =
+                    getSession()
+                        .map( session -> Optional.ofNullable(session.getProjectBuildingRequest()) )
+                        .orElseThrow( () -> new NoSuchElementException( "session has not been initialized!") )
+                            .orElseThrow( () -> new NoSuchElementException( "projectBuildingRequest has not been initialized!") );
+
+            result.setFile(file);
+
+            getDeployer()
+                    .orElseThrow( () -> new NoSuchElementException( "deployer has not been initialized!"))
+                    .deploy( projectBuildingRequest, deploymentRepository.get(), Arrays.asList(result));
+
+
+        } catch (ArtifactDeployerException e) {
+            if(failOnError) {
+                throw new MojoExecutionException(e.getMessage(), e);
+            }
+            else {
+                if( getLog().isDebugEnabled() ) {
+                    getLog().warn(e.getMessage(), e);
+                }
+                else {
+                    getLog().warn(e.getMessage());
+                }
+            }
         }
 
         return result;
@@ -515,7 +562,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         Artifact result;
         String candidateArtifactVersion = version;
 
-        if (isBlank(filePattern)) {
+        if (!isBlank(filePattern)) {
 
             try {
                 final Pattern p = Pattern.compile(filePattern);
