@@ -8,19 +8,19 @@
   <packaging>maven-plugin</packaging>
   <name>Maven Bulk Deploy Plugin - ${project.version}</name>
   <description><![CDATA[
-    Plugin that makes easy implementing BOM approach. It allows to install & deploy libraries from folder(s) generating BOM file. 
+    Plugin that makes easy implementing BOM approach. It allows to install & deploy libraries from folder(s) generating BOM file.
   ]]></description>
   <url>https://github.com/bsorrentino/maven-bulk-deploy</url>
-  
-<!-- 
+
+<!--
 <prerequisites>
     <maven>3.5.0</maven>
 </prerequisites>
--->  
-  
+-->
+
 <scm>
-<developerConnection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</developerConnection>  
-<connection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</connection>  
+<developerConnection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</developerConnection>
+<connection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</connection>
 <url>https://github.com/bsorrentino/maven-bulk-deploy.git</url>
 </scm>
 
@@ -37,11 +37,11 @@
   </distributionManagement>
 
 <properties>
-    
+
     <maven.version>3.5.4</maven.version>
     <pluginTools.version>3.6.0</pluginTools.version>
     <reports-plugin-version>2.4</reports-plugin-version>
-    
+
 <!-- SONATYPE REPO -->
     <snapshot.repo.id>sonatype-repo</snapshot.repo.id>
     <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots</snapshot.repo.url>
@@ -86,7 +86,7 @@
       <url>https://opensource.org/licenses/MIT</url>
     </license>
   </licenses>
-  
+
 <dependencies>
     <!-- Maven classes maintained as compatibility layer for tools done with Maven 2.
     <dependency>
@@ -95,7 +95,7 @@
         <version>${maven.version}</version>
     </dependency>
     -->
-      
+
   <dependency>
     <groupId>org.apache.maven</groupId>
     <artifactId>maven-plugin-api</artifactId>
@@ -133,9 +133,9 @@
     <dependency>
         <artifactId>junit</artifactId>
         <groupId>junit</groupId>
-        <version>4.11</version>   
+        <version>4.11</version>
     </dependency>
- 
+
 </dependencies>
 
 <reporting>
@@ -177,7 +177,7 @@
 </reporting>
 
 <build>
-           
+
    <plugins>
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -188,7 +188,7 @@
                 <outputDirectory>${project.build.directory}/apidocs</outputDirectory>
             </configuration>
         </plugin>
-   
+
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-plugin-plugin</artifactId>
@@ -241,10 +241,10 @@
 
             <configuration>
             </configuration>
-        </plugin>            
-    
- 
-        
+        </plugin>
+
+
+
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
@@ -252,11 +252,11 @@
         </plugin>
 
     </plugins>
-						
+
 </build>
- 
+
 <profiles>
-    
+
     <profile>
         <id>release</id>
         <build>
@@ -318,19 +318,19 @@
                         <phase>site</phase>
                     </execution>
                     </executions>
-                </plugin>      
-          
+                </plugin>
+
 
             </plugins>
         </build>
     </profile>
-    
+
     <profile>
         <id>softphone</id>
         <build>
             <plugins>
-		
-                <!-- 
+
+                <!--
                 =======================
                 CONFLUENCE REPORT
                 =======================
@@ -350,7 +350,7 @@
                                         <id>confluence</id>
                                         <configuration>
                                             <endPoint>${confluence.home}/rpc/xmlrpc</endPoint>
-                                            <serverId>softphone-server</serverId> 
+                                            <serverId>softphone-server</serverId>
                                             <spaceKey>DEV</spaceKey>
                                             <parentPageTitle>Plugin</parentPageTitle>
                                             <properties>
@@ -360,26 +360,26 @@
                                                 <label>maven</label>
                                                 <label>deploy</label>
                                             </labels>
-			                                	                                
+
                                         </configuration>
                                         <reports>
-                                            <report>confluence-summary</report>                             
+                                            <report>confluence-summary</report>
                                         </reports>
                                     </reportSet>
-                                </reportSets>                   
-		
+                                </reportSets>
+
                             </plugin>
                         </reportPlugins>
                     </configuration>
                 </plugin>
 
-                        
+
             </plugins>
-        
-        
+
+
         </build>
-    
-</profile>    
-    
+
+</profile>
+
 </profiles>
 </project>
