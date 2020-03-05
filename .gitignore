@@ -1,9 +1,26 @@
 .DS_Store
+settings.json
+
+#
+# eclipse
+#
+.factorypath
 .classpath
 .project
 .settings/
+
+#
+# maven
+#
 target
 
+#
+# vscode
+#
 .vscode/
-.factorypath
-settings.json
+
+#
+# intelliJ
+#
+.idea/
+*.iml
