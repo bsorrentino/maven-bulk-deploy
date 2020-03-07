@@ -5,6 +5,17 @@
 ## Next release
 ### Generic changes
 
+**update to release version**
+
+ * add changelog plugin
+
+[a768bcb44ab2c3d](https://github.com/bsorrentino/maven-bulk-deploy/commit/a768bcb44ab2c3d) bsorrentino *2020-03-07 19:45:41*
+
+**update ignore**
+
+
+[e43ef78518e1277](https://github.com/bsorrentino/maven-bulk-deploy/commit/e43ef78518e1277) bsorrentino *2020-03-07 19:45:16*
+
 **add changelog plugin**
 
 
