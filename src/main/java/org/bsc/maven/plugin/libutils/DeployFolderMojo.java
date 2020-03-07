@@ -1,5 +1,40 @@
 package org.bsc.maven.plugin.libutils;
 
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
+import org.apache.maven.artifact.versioning.VersionRange;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.DefaultModelWriter;
+import org.apache.maven.model.io.ModelWriter;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.artifact.ProjectArtifactMetadata;
+import org.apache.maven.shared.transfer.artifact.deploy.ArtifactDeployer;
+import org.apache.maven.shared.transfer.artifact.deploy.ArtifactDeployerException;
+import org.codehaus.plexus.util.IOUtil;
+import org.codehaus.plexus.util.WriterFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -7,44 +42,15 @@ import static org.bsc.maven.plugin.libutils.MojoUtils.getArtifactCoordinateFromP
 import static org.codehaus.plexus.util.FileUtils.copyFile;
 import static org.codehaus.plexus.util.FileUtils.getFiles;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
-import org.apache.maven.artifact.handler.ArtifactHandler;
-import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
-import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
-import org.apache.maven.artifact.versioning.VersionRange;
-import org.apache.maven.model.Dependency;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.DefaultModelWriter;
-import org.apache.maven.model.io.ModelWriter;
-import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.artifact.ProjectArtifactMetadata;
-import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.WriterFactory;
-
 /**
  * Installs artifacts from folder to remote repository.
  *
  */
 @Mojo(name = "deploy-folder")
 public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
+
+    @Component
+    private ArtifactDeployer artifactDeployer;
 
     @Parameter( defaultValue = "${project}", readonly = true )
     protected MavenProject project;
@@ -54,7 +60,6 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      */
     @Parameter(defaultValue = "false", property = "deploy.updatePom" )
     private boolean _updatePom;
-
     /**
      * preview mode
      */
@@ -75,7 +80,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      * GroupId of the artifact to be deployed. Retrieved from POM file if
      * specified.
      * <br/>
-     * It must be always specified in case of fat jar to allow the plugin to localize 
+     * It must be always specified in case of fat jar to allow the plugin to localize
      * the correct pom.properties (multiple pom.properties)
      *
      */
@@ -84,7 +89,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     /**
      * ArtifactId prefix of the artifacts to be deployed. Retrieved from POM
      * file if specified.
-     * 
+     *
      *
      */
     @Parameter(property = "artifactId-prefix")
@@ -156,13 +161,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     @Parameter(property = "url", required = true)
     private String url;
     /**
-     * Component used to create a repository
      *
-     */
-    @Component
-    private ArtifactRepositoryFactory repositoryFactory; 
-    /**
-     * 
      */
     @Component
     private ArtifactHandlerManager artifactHandlerManager;
@@ -200,7 +199,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      *    version:      19.0
      *
      *    if version set to xxx and useSameGroupIdAsArtifactId = true
-     * 
+     *
      *    groupId:      guava-19.0
      *    artifactId:   guava-19.0
      *    version:      xxx
@@ -209,12 +208,34 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     @Parameter(property = "useSameGroupIdAsArtifactId", defaultValue = "false")
     private boolean useSameGroupIdAsArtifactId;
 
-    /**
+     /**
      * issue #2 : skip check pom.properties inside jar
      */
     @Parameter(property = "ignorePomProperties", defaultValue = "false")
     private boolean ignorePomProperties;
-    
+
+    /**
+     * Ignore errors on deployments
+     * @since 2.1
+     */
+    @Parameter(property = "deploy.failOnError", defaultValue = "true")
+    private boolean failOnError;
+
+    /**
+     *
+     * @return
+     */
+    private Optional<ArtifactDeployer> getDeployer() {
+        return Optional.ofNullable(artifactDeployer);
+    }
+
+    private boolean isPreviewMode() {
+        return preview;
+    }
+
+    /**
+     *
+     */
     private void updatePom() {
 
         if (!_updatePom) {
@@ -267,15 +288,15 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
 
             //java.util.Set<Artifact> da = project.getDependencyArtifacts();
             java.util.Set<Artifact> da = project.getArtifacts();
-            
+
             if( !da.contains(a)) {
-            
+
                 final Dependency dep = new Dependency();
                 dep.setArtifactId(a.getArtifactId());
                 dep.setGroupId(a.getGroupId());
                 dep.setVersion(a.getVersion());
                 dep.setScope(a.getScope());
-                
+
                 project.getOriginalModel().addDependency(dep);
             }
 
@@ -302,10 +323,12 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             throw new MojoExecutionException(sourceFolder.getPath() + " is not folder.");
         }
 
-        final ArtifactRepositoryLayout layout = repositoryLayouts.get(repositoryLayout);
+        if ( isOffline() && !isPreviewMode() )
+        {
+            throw new MojoExecutionException( "Cannot deploy artifacts when Maven is in offline mode" );
+        }
 
-        final ArtifactRepository deploymentRepository =
-                repositoryFactory.createDeploymentArtifactRepository(repositoryId, url, layout, uniqueVersion);
+        final ArtifactRepository deploymentRepository = createDeploymentArtifactRepository(repositoryId, url);
 
         final String protocol = deploymentRepository.getProtocol();
 
@@ -341,14 +364,14 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
                 if (deployedFiles.containsKey(f.getName())) {
                     a = execute(f, Optional.empty());
                 } else {
-                    a = execute(f, Optional.of(deploymentRepository));
-                    
-                    if( !preview ) {
-                        
+                    a = execute(f, Optional.ofNullable(deploymentRepository));
+
+                    if( !isPreviewMode() ) {
+
                         deployedFiles.setProperty(f.getName(), f.getAbsolutePath());
 
                         try( java.io.Writer checkFileWriter = new java.io.FileWriter(checkFile)) {
-                            deployedFiles.store( checkFileWriter, "artifact deployed");                            
+                            deployedFiles.store( checkFileWriter, "artifact deployed");
                         }
                     }
 
@@ -389,7 +412,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
     }
 
     /**
-     * 
+     *
      * @param groupId
      * @param artifactId
      * @param version
@@ -397,46 +420,46 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
      * @return
      */
     private Artifact createBuildArtifact( String groupId, String artifactId, String version, String packaging ) {
-        
+
         final boolean optional  = false;
         final String classifier = "";
         final String scope      = Artifact.SCOPE_COMPILE;
-        
+
         final ArtifactHandler handler = artifactHandlerManager.getArtifactHandler( packaging );
-        
-        final VersionRange versionRange = (version != null) ? 
-                            VersionRange.createFromVersion( version ) : 
+
+        final VersionRange versionRange = (version != null) ?
+                            VersionRange.createFromVersion( version ) :
                             null;
-        
-        final Artifact artifact =                    
-                new DefaultArtifact( 
-                        groupId, 
-                        artifactId, 
-                        versionRange, 
-                        scope, 
-                        packaging, 
-                        classifier, 
+
+        final Artifact artifact =
+                new DefaultArtifact(
+                        groupId,
+                        artifactId,
+                        versionRange,
+                        scope,
+                        packaging,
+                        classifier,
                         handler,
                         optional );
                 /*
                 artifactFactory.createBuildArtifact(
-                               groupId, 
+                               groupId,
                                artifactId,
-                               version, 
+                               version,
                                packaging );
-                 */                               
-        
+                 */
+
         return artifact;
-        
+
     }
 
     /**
-     * 
+     *
      * @param props
      * @return
      */
     private Artifact createBuildArtifact( java.util.Properties props ) {
-        
+
         final String groupId    = props.getProperty("groupId");
         final String artifactId = props.getProperty("artifactId");
         final String version    = props.getProperty("version");
@@ -503,10 +526,9 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
                 result = createNotStandardArtifact(candidateArtifactId, packaging);
             }
 
-            if (preview || !deploymentRepository.isPresent()) {
+            if (isPreviewMode() || !deploymentRepository.isPresent()) {
                 return result;
             }
-
 
             // Upload the POM if requested, generating one if need be
             if (!isMavenArtifact && generatePom) {
@@ -518,9 +540,32 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         }
 
         try {
-            getDeployer().deploy(file, result, deploymentRepository.get(), getLocalRepository());
-        } catch (ArtifactDeploymentException e) {
-            throw new MojoExecutionException(e.getMessage(), e);
+
+            final ProjectBuildingRequest projectBuildingRequest =
+                    getSession()
+                        .map( session -> Optional.ofNullable(session.getProjectBuildingRequest()) )
+                        .orElseThrow( () -> new NoSuchElementException( "session has not been initialized!") )
+                            .orElseThrow( () -> new NoSuchElementException( "projectBuildingRequest has not been initialized!") );
+
+            result.setFile(file);
+
+            getDeployer()
+                    .orElseThrow( () -> new NoSuchElementException( "deployer has not been initialized!"))
+                    .deploy( projectBuildingRequest, deploymentRepository.get(), Arrays.asList(result));
+
+
+        } catch (ArtifactDeployerException e) {
+            if(failOnError) {
+                throw new MojoExecutionException(e.getMessage(), e);
+            }
+            else {
+                if( getLog().isDebugEnabled() ) {
+                    getLog().warn(e.getMessage(), e);
+                }
+                else {
+                    getLog().warn(e.getMessage());
+                }
+            }
         }
 
         return result;
@@ -530,7 +575,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
         Artifact result;
         String candidateArtifactVersion = version;
 
-        if (isBlank(filePattern)) {
+        if (!isBlank(filePattern)) {
 
             try {
                 final Pattern p = Pattern.compile(filePattern);
@@ -557,7 +602,7 @@ public class DeployFolderMojo extends AbstractDeployMojo implements Constants {
             if(isBlank(candidateArtifactVersion)) {
 
                 final String[] parts = org.apache.commons.lang3.StringUtils.split(candidateArtifactId, "-");
-                
+
                 if (parts != null && parts.length > 1 && org.apache.commons.lang3.StringUtils.containsOnly(parts[parts.length - 1], "0123456789.")) {
                     candidateArtifactVersion = parts[parts.length - 1];
                     candidateArtifactId = org.apache.commons.lang3.StringUtils.substringBeforeLast(candidateArtifactId, "-");

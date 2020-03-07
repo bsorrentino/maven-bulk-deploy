@@ -4,23 +4,23 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bsc.maven.plugin</groupId>
   <artifactId>bulk-deploy</artifactId>
-  <version>2.0</version>
+  <version>2.1</version>
   <packaging>maven-plugin</packaging>
   <name>Maven Bulk Deploy Plugin - ${project.version}</name>
   <description><![CDATA[
-    Plugin that makes easy implementing BOM approach. It allows to install & deploy libraries from folder(s) generating BOM file. 
+    Plugin that makes easy implementing BOM approach. It allows to install & deploy libraries from folder(s) generating BOM file.
   ]]></description>
   <url>https://github.com/bsorrentino/maven-bulk-deploy</url>
-  
-<!-- 
+
+<!--
 <prerequisites>
     <maven>3.5.0</maven>
 </prerequisites>
--->  
-  
+-->
+
 <scm>
-<developerConnection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</developerConnection>  
-<connection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</connection>  
+<developerConnection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</developerConnection>
+<connection>scm:git:https://github.com/bsorrentino/maven-bulk-deploy.git</connection>
 <url>https://github.com/bsorrentino/maven-bulk-deploy.git</url>
 </scm>
 
@@ -34,18 +34,14 @@
   		<url>${snapshot.repo.url}</url>
                 <uniqueVersion>false</uniqueVersion>
   	</snapshotRepository>
-      <site>
-        <id>${release.site.id}</id>
-        <url>${release.site.url}</url>
-      </site>
   </distributionManagement>
 
 <properties>
-    
-    <mavenVersion>3.5.0</mavenVersion>
-    <pluginToolsVersion>3.5.2</pluginToolsVersion>
+
+    <maven.version>3.5.4</maven.version>
+    <pluginTools.version>3.6.0</pluginTools.version>
     <reports-plugin-version>2.4</reports-plugin-version>
-    
+
 <!-- SONATYPE REPO -->
     <snapshot.repo.id>sonatype-repo</snapshot.repo.id>
     <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots</snapshot.repo.url>
@@ -90,31 +86,42 @@
       <url>https://opensource.org/licenses/MIT</url>
     </license>
   </licenses>
-  
+
 <dependencies>
-    <!-- Maven classes maintained as compatibility layer for tools done with Maven 2. -->
+    <!-- Maven classes maintained as compatibility layer for tools done with Maven 2.
     <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-compat</artifactId>
-        <version>${mavenVersion}</version>
+        <version>${maven.version}</version>
     </dependency>
-      
+    -->
+
   <dependency>
     <groupId>org.apache.maven</groupId>
     <artifactId>maven-plugin-api</artifactId>
-    <version>${mavenVersion}</version>
+    <version>${maven.version}</version>
   </dependency>
   <dependency>
     <groupId>org.apache.maven</groupId>
     <artifactId>maven-core</artifactId>
-    <version>${mavenVersion}</version>
+    <version>${maven.version}</version>
   </dependency>
- 
+    <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-artifact</artifactId>
+        <version>${maven.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.maven.shared</groupId>
+        <artifactId>maven-artifact-transfer</artifactId>
+        <version>0.11.0</version>
+    </dependency>
+
     <!-- dependencies to annotations -->
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>${pluginToolsVersion}</version>
+      <version>${pluginTools.version}</version>
     </dependency>
     <!-- generated help mojo has a dependency to plexus-utils -->
     <dependency>
@@ -126,9 +133,9 @@
     <dependency>
         <artifactId>junit</artifactId>
         <groupId>junit</groupId>
-        <version>4.11</version>   
+        <version>4.11</version>
     </dependency>
- 
+
 </dependencies>
 
 <reporting>
@@ -163,14 +170,14 @@
     <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
-        <version>${pluginToolsVersion}</version>
+        <version>${pluginTools.version}</version>
     </plugin>
 
 </plugins>
 </reporting>
 
 <build>
-           
+
    <plugins>
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -181,11 +188,11 @@
                 <outputDirectory>${project.build.directory}/apidocs</outputDirectory>
             </configuration>
         </plugin>
-   
+
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-plugin-plugin</artifactId>
-            <version>${pluginToolsVersion}</version>
+            <version>${pluginTools.version}</version>
             <configuration>
                 <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
             </configuration>
@@ -220,7 +227,7 @@
                 <dependency>
                     <groupId>org.apache.maven.plugin-tools</groupId>
                     <artifactId>maven-plugin-annotations</artifactId>
-                    <version>${pluginToolsVersion}</version>
+                    <version>${pluginTools.version}</version>
                     <scope>runtime</scope>
                 </dependency>
 
@@ -234,22 +241,37 @@
 
             <configuration>
             </configuration>
-        </plugin>            
-    
- 
-        
+        </plugin>
+
+
+
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.8.1</version>
         </plugin>
 
-    </plugins>
-						
+       <!--
+        mvn git-changelog-maven-plugin:git-changelog -N -DtoRef=refs/heads/release/...
+        -->
+       <plugin>
+           <groupId>se.bjurr.gitchangelog</groupId>
+           <artifactId>git-changelog-maven-plugin</artifactId>
+           <version>1.60</version>
+           <inherited>false</inherited>
+           <!-- Minimal config // -->
+           <configuration>
+               <settingsFile>changelog.json</settingsFile>
+               <file>CHANGELOG.md</file>
+           </configuration>
+       </plugin>
+
+   </plugins>
+
 </build>
- 
+
 <profiles>
-    
+
     <profile>
         <id>release</id>
         <build>
@@ -311,19 +333,19 @@
                         <phase>site</phase>
                     </execution>
                     </executions>
-                </plugin>      
-          
+                </plugin>
+
 
             </plugins>
         </build>
     </profile>
-    
+
     <profile>
         <id>softphone</id>
         <build>
             <plugins>
-		
-                <!-- 
+
+                <!--
                 =======================
                 CONFLUENCE REPORT
                 =======================
@@ -343,7 +365,7 @@
                                         <id>confluence</id>
                                         <configuration>
                                             <endPoint>${confluence.home}/rpc/xmlrpc</endPoint>
-                                            <serverId>softphone-server</serverId> 
+                                            <serverId>softphone-server</serverId>
                                             <spaceKey>DEV</spaceKey>
                                             <parentPageTitle>Plugin</parentPageTitle>
                                             <properties>
@@ -353,26 +375,26 @@
                                                 <label>maven</label>
                                                 <label>deploy</label>
                                             </labels>
-			                                	                                
+
                                         </configuration>
                                         <reports>
-                                            <report>confluence-summary</report>                             
+                                            <report>confluence-summary</report>
                                         </reports>
                                     </reportSet>
-                                </reportSets>                   
-		
+                                </reportSets>
+
                             </plugin>
                         </reportPlugins>
                     </configuration>
                 </plugin>
 
-                        
+
             </plugins>
-        
-        
+
+
         </build>
-    
-</profile>    
-    
+
+</profile>
+
 </profiles>
 </project>

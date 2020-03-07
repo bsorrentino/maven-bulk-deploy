@@ -1,15 +1,27 @@
 .DS_Store
+settings.json
+.okhttpcache/
+
+#
+# eclipse
+#
+.factorypath
 .classpath
 .project
 .settings/
+
+#
+# maven
+#
 target
 
+#
+# vscode
+#
 .vscode/
-.factorypath
-settings.json
-/.apt_generated/
-/.apt_generated_tests/
 
-
+#
+# intelliJ
+#
 .idea/
 *.iml
